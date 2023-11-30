@@ -1,0 +1,215 @@
+﻿@model WMSWebApp.ViewModels.WarehouseModel
+
+@{
+    ViewData["Title"] = "Create";
+}
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1>New Warehouse</h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="#">Home</a></li>
+                    <li class="breadcrumb-item active">Master</li>
+                </ol>
+            </div>
+        </div>
+    </div><!-- /.container-fluid -->
+</section>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">New warehouse</h3>
+                    </div>
+
+                    <form asp-action="Create" asp-controller="Warehouse">
+                        <div class="card-body">
+                            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                            <div class=row>
+                                <div class=" col-md-6">
+                                    <div class="form-group">
+                                        <label asp-for="WarehouseCode"></label>
+                                        <input asp-for="WarehouseCode" class="form-control "  required/>
+                                    </div>
+                                    <span asp-validation-for="WarehouseCode" class="text-danger"></span>
+                                </div>
+                                <div class=" col-md-6">
+                                    <div class="form-group">
+                                        <label asp-for="WarehouseName"></label>
+                                        <input asp-for="WarehouseName" class="form-control " required />
+                                    </div>
+                                    <span asp-validation-for="WarehouseName" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class=row>
+                                <div class=" col-md-6">
+                                    <div class="form-group">
+                                        <label asp-for="Location"></label>
+                                        <select class="form-control" id="ddllocation" asp-items="@(new SelectList(@ViewBag.districts,"district_id", "district_name"))">
+                                        </select>
+                                       <input asp-for="Location" type="hidden"/>
+                                    </div>
+                                    <span asp-validation-for="Location" class="text-danger"></span>
+                                </div>
+                                <div class=" col-md-6">
+                                    <div class="form-group">
+                                        <label asp-for="ContactPerson"></label>
+                                        <input asp-for="ContactPerson" class="form-control " required />
+                                    </div>
+                                    <span asp-validation-for="ContactPerson" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class=row>
+                                <div class="form-group col-md-6">
+                                    <div class="row">
+                                        <label asp-for="ContactNumber"></label>
+                                        <input asp-for="ContactNumber" id="txtcontactno" class="form-control "  required/>
+                                    </div>
+                                    <span asp-validation-for="ContactNumber" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group ">
+                                        <label asp-for="TotalSpaceSizeType"></label>
+                                        <select class="form-control" asp-for="TotalSpaceSizeType">
+                                           
+                                            <option value="Per Sq foot">Per Sq foot</option>
+                                            <option value="Per Qubic foot">Per Qubic foot</option>
+                                        </select>
+                                    </div>
+                                    <span asp-validation-for="TotalSpaceSizeType" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class=row>
+                                <div class="col-md-6">
+                                    <div class="form-group ">
+                                        <label asp-for="TotalSpaceSize"></label>
+                                        <input asp-for="TotalSpaceSize" class="form-control" required />
+                                    </div>
+                                    <span asp-validation-for="TotalSpaceSize" class="text-danger"></span>
+                                </div>
+
+                            </div>
+                            <hr />
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <h3 class="text-info">Zone & Areas</h3>
+                                    <div class="form-group row">
+                                        <div class="col-md-2">
+                                            <label>Zone Code.</label>
+
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label>Zone Name</label>
+
+                                        </div>
+
+                                    </div>
+                                    <input type="hidden" value="0" id="zoneno" />
+                                    <div class="row" id="zone_0">
+                                        <div class="col-md-2">
+                                            <input asp-for="ZoneAreaList[0].ZoneCode" class="form-control" placeholder="Zone Code" />
+                                        </div>
+                                        <div class="col-md-2">
+                                          <input asp-for="ZoneAreaList[0].ZoneName" class="form-control" placeholder="Zone Name" />
+                                        </div>
+
+                                    </div>
+                                    <hr />
+                                </div>
+
+                            </div>
+                            <br />
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <button type="button" class="btn btn-primary" onclick="addzone()"><i class="fas fa-plus"></i> </button>
+                                    <button type="button" class="btn btn-danger" onclick="removezone()"><i class="fas fa-times"></i> </button>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="card-footer">
+
+                                <button class="btn btn-primary" type="submit"> Save & Next</button>
+                                <a asp-action="Index" class="btn btn-primary float-right">Back to List</a>
+
+                            </div>
+                        </div>
+                    </form>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+@section Scripts {
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&libraries=places"></script>
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+
+        //function initialize() {
+        //    var input = document.getElementById('Location');
+        //    new google.maps.places.Autocomplete(input);
+        //}
+
+        //google.maps.event.addDomListener(window, 'load', initialize);
+
+        var addzone = function() {
+            var totalpax = Number($("#zoneno").val());
+            var no = (totalpax + 1);
+            var d = '<br/><div class="row" id="zone_' + no + '">' +
+                '    <div class="col-md-2">' +
+                '        <input class="form-control" placeholder="Zone Code" type="text" id="ZoneAreaList_' + no + '__ZoneCode" name="ZoneAreaList[' + no + '].ZoneCode" value="">' +
+                '    </div>' +
+                '    <div class="col-md-2">' +
+                '        <input class="form-control" placeholder="Zone Name" type="text" id="ZoneAreaList_' + no + '__ZoneName" name="ZoneAreaList[' + no + '].ZoneName" value="">' +
+                '    </div>' +
+
+                '</div>';
+            $(d).insertAfter("#zone_" + totalpax);
+            $("#zoneno").val(no);
+
+
+        }
+        var removezone = function() {
+            var totalpax = Number($("#zoneno").val());
+            if (Number(totalpax) > 0) {
+                $("#zone_" + totalpax).remove();
+                $("#zoneno").val(Number(totalpax) - 1)
+            }
+
+        }
+        // $("#txtcontactno").keydown(function(event) {
+        //  k = event.which;
+        //  if ((k >= 96 && k <= 105) || k == 8) {
+        //    if ($(this).val().length == 10) {
+        //      if (k == 8) {
+        //        return true;
+        //      } else {
+        //        event.preventDefault();
+        //        return false;
+
+        //      }
+        //    }
+        //  } else {
+        //    event.preventDefault();
+        //    return false;
+        //  }
+
+        //});
+          $('#ddllocation').change(function() {debugger;
+        $('#Location').val($("#ddllocation option:selected").text());
+    });
+
+
+    </script>
+    }

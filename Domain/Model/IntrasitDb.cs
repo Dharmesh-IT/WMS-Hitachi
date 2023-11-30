@@ -1,0 +1,36 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using WMS.Core;
+namespace Domain.Model
+{
+    public class IntrasitDb : BaseEntity
+    {
+
+        public string Login_Branch { get; set; }
+        public string Sender_Company { get; set; }
+        public string Sender_Branch { get; set; }
+        public string PurchaseOrder { get; set; }
+        public string Item_Code { get; set; }
+        public string SubItem_Code { get; set; }
+        public string SubItem_Name { get; set; }
+        public string Material_Description { get; set; }
+        public string Way_Bill_Number { get; set; }
+        public string Line_Item_id { get; set; }
+        public string Source_Number { get; set; }
+        public string Bucket { get; set; }
+        public decimal Qty { get; set; }
+        public string Unit { get; set; }
+        public decimal Amt { get; set; }
+        public DateTime ETA { get; set; }
+        public bool IsDeleted { get; set; }
+        public bool IsGrn { get; set; }
+        public string Recv_Date { get; set; }
+
+        
+
+    }
+}

@@ -1,0 +1,14 @@
+[
+  {
+    "outputFileName": "wwwroot/js/common.min.js",
+    "inputFiles": [
+      "wwwroot/js/common.js"
+    ]
+  },
+  {
+    "outputFileName": "wwwroot/js/grn/grnprocess.min.js",
+    "inputFiles": [
+      "wwwroot/js/grn/grnprocess.js"
+    ]
+  }
+]

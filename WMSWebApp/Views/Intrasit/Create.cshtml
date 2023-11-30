@@ -1,0 +1,173 @@
+﻿@model WMSWebApp.ViewModels.IntransitViewModel
+
+@{
+    ViewData["Title"] = "Add New Intrasit";
+    Layout = "../Shared/_Layout.cshtml";
+}
+
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1>Intrasit Process</h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="#">Home</a></li>
+                    <li class="breadcrumb-item active">Process</li>
+                </ol>
+            </div>
+        </div>
+    </div><!-- /.container-fluid -->
+</section>
+<section class="content">
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">GRN In</h3>
+
+                    </div>
+                    @* <form>*@
+                    <div class="card-body">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <div class=row>
+                            <div class=" col-md-6">
+
+                                <div class="form-group">
+                                    <label asp-for="intrasitc.PurchaseOrder"></label>
+                                    <input asp-for="intrasitc.PurchaseOrder" class="form-control "  id="txtPurchaseOrder" />
+                                </div>
+                                <span asp-validation-for="intrasitc.PurchaseOrder" class="text-danger"></span>
+                            </div>
+                            <div class=" col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="intrasitc.SenderCompany"></label>
+                                    <select asp-for="CId" class="form-control " asp-items="@(new SelectList(@ViewBag.ListofCompany,"Id", "CompanyName"))">
+                                    </select>
+                                </div>
+                                <span asp-validation-for="intrasitc.SenderCompany" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class=row>
+                            <div class=" col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="intrasitc.Branch"></label>
+                                    <select asp-for="BId" class="form-control " asp-items="@(new SelectList(@ViewBag.listBranch,"Id", "BranchName"))">
+                                    </select>
+                                </div>
+                                <span asp-validation-for="intrasitc.Branch" class="text-danger"></span>
+                            </div>
+                            <div class=" col-md-6">
+
+                                <div class="form-group">
+                                    <label asp-for="intrasitc.ItemCode"></label>
+
+                                    <select asp-for="ItId" class="form-control " asp-items="@(new SelectList(@ViewBag.listItem,"Id", "ItemName"))">
+                                    </select>
+                                </div>
+                                <span asp-validation-for="intrasitc.ItemCode" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class=row>
+                            <div class=" col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="intrasitc.SubItemName"></label>
+
+                                    <select asp-for="SubItemId" class="form-control " id="subItemId">
+                                        <option value="">Select</option>
+                                    </select>
+                                </div>
+                                <span asp-validation-for="intrasitc.SubItemName" class="text-danger"></span>
+                            </div>
+                            <div class=" col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="intrasitc.MaterialDescription"></label>
+                                    <input asp-for="intrasitc.MaterialDescription" class="form-control"  id="txtMDesc" readonly/>
+                                </div>
+                             
+                            </div>
+                        </div>
+                        <div class=row>
+                            <div class=" col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="intrasitc.Qty"></label>
+                                    <input asp-for="intrasitc.Qty" class="form-control" id="txtqty" />
+                                </div>
+                                @*<span asp-validation-for="EmailIdHO" class="text-danger"></span>*@
+                            </div>
+                            <div class=" col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="intrasitc.Unit"></label>
+                                    <input asp-for="intrasitc.Unit" class="form-control" id="txtunit" name="unit" />
+                                </div>
+                                @*  <span asp-validation-for="SpaceSizeFormat" class="text-danger"></span>*@
+                            </div>
+                        </div>
+                        <div class=row>
+                            <div class=" col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="intrasitc.Amt"></label>
+                                    <input asp-for="intrasitc.Amt" class="form-control"  id="txtAmt" name="amt" />
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        <input type="submit" value="Create" class="btn btn-primary" id="btnaddRow" />
+                        <a asp-action="Index" class="btn btn-primary float-right">Back to List</a>
+                    </div>
+                    @* </form>*@
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Upload Bulk</h3>
+
+                    </div>
+                    @* <form id="fileUploadForm" method="post" enctype="multipart/form-data" asp-controller="Intrasit" asp-action="OnPostMyUploader">*@
+                    <div class="card-body">
+                        @*<div class="form-group">
+                            <label for="exampleInputFile">Upload file:</label>
+                            <div class="input-group">
+                            <div class="custom-file">
+                            <input type="file" id="uploadFile" name="uploadFile" />
+                            <label class="custom-file-label" for="exampleInputFile">Choose file</label>
+                            </div>
+                            <div class="input-group-append">
+                            <span class="input-group-text">Upload</span>
+                            </div>
+                            </div>
+                            </div>*@
+                        <partial name="_InTransitList.cshtml" />
+                    </div>
+                    <div class="card-footer">
+                        <button type="submit" id="btnsubmit" value="Upload" class="btn btn-primary"><i class="fa fa-cloud-upload" aria-hidden="true"></i> Submit</button>
+                    </div>
+
+
+
+
+                    @*   </form>*@
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+<script src="~/js/datatables.net/js/jquery.dataTables.min.js"></script>
+<script src="~/js/Intrasit.js"></script>
+}

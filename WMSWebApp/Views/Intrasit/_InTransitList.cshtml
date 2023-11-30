@@ -1,0 +1,53 @@
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@addTagHelper *, AuthoringTagHelpers
+@model WMSWebApp.ViewModels.IntransitViewModel;
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="table-responsive">
+            <table id="tblJobBoard" class="table table-bordered compactTable text-center" style="width:100%">
+                <thead class="bg-light">
+                    <tr>
+                        @*<td>Id</td>*@
+                        <td>Invoice Number</td>
+                        <td>Fulfillment Center</td>
+                        <td>Sender Branch</td>
+                        <td>Item Code</td>
+                        <td>SubItem Name</td>
+                        <td>Material Description</td>
+                        <td>QTY</td>
+                        <td>Unit</td>
+                        <td>Amt</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    @*	@for (int i = 0; i < Model.intrasitcList.Count; i++)
+                        {
+                        <tr>
+                        <td>@Model.intrasitcList[i].Branch</td>
+                        <td>@Model.intrasitcList[i].PurchaseOrder</td>
+                        <td>@Model.intrasitcList[i].ItemCode</td>
+                        <td>@Model.intrasitcList[i].SenderCompany</td>
+                        <td>@Model.intrasitcList[i].SubItemName</td>
+                        <td>@Model.intrasitcList[i].MaterialDescription</td>
+                        <td>@Model.intrasitcList[i].Qty</td>
+                        <td>@Model.intrasitcList[i].Amt</td>
+                        <td>
+                        </tr>
+                        }*@
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $("#tblJobBoard").DataTable({
+           
+         });
+
+    });
+</script>
+
