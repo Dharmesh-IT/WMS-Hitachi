@@ -24,6 +24,7 @@ using WMS.Data;
 using WMSWebApp.Models;
 using WMSWebApp.ViewModels;
 using static System.Net.WebRequestMethods;
+using WMSWebApp.HitachiProvider;
 
 namespace WMSWebApp.Controllers
 {
@@ -52,26 +53,26 @@ namespace WMSWebApp.Controllers
         [HttpGet]
         public string testM()
         {
-           var value =  EncryptDecryptV1.Encrypt("test",inbound,inbound);
+            //var value =  EncryptDecryptV1.Encrypt("test",inbound,inbound);
 
-            System.ServiceModel.BasicHttpBinding binding = new System.ServiceModel.BasicHttpBinding();
-            binding.MaxBufferSize = int.MaxValue;
-            binding.ReaderQuotas = System.Xml.XmlDictionaryReaderQuotas.Max;
-            binding.MaxReceivedMessageSize = int.MaxValue;
-            binding.AllowCookies = true;
-            binding.Security.Mode = System.ServiceModel.BasicHttpSecurityMode.Transport;
-            binding.TransferMode = System.ServiceModel.TransferMode.Buffered;
-            string uRL = "";
-            //binding.Security.Transport.ClientCredentialType = HttpClientCredentialType.Basic;
-            var endpoint = new EndpointAddress(uRL + "/AirService");
-            ////AirLowFareSearchPortTypeClient client = new AirLowFareSearchPortTypeClient(AirLowFareSearchPortTypeClient.EndpointConfiguration.AirLowFareSearchPort, uRL + "/AirService");
-            //AirLowFareSearchPortTypeClient client = new AirLowFareSearchPortTypeClient(binding, endpoint);
+            // System.ServiceModel.BasicHttpBinding binding = new System.ServiceModel.BasicHttpBinding();
+            // binding.MaxBufferSize = int.MaxValue;
+            // binding.ReaderQuotas = System.Xml.XmlDictionaryReaderQuotas.Max;
+            // binding.MaxReceivedMessageSize = int.MaxValue;
+            // binding.AllowCookies = true;
+            // binding.Security.Mode = System.ServiceModel.BasicHttpSecurityMode.Transport;
+            // binding.TransferMode = System.ServiceModel.TransferMode.Buffered;
+            // string uRL = "";
+            // //binding.Security.Transport.ClientCredentialType = HttpClientCredentialType.Basic;
+            // var endpoint = new EndpointAddress(uRL + "/AirService");
+            // ////AirLowFareSearchPortTypeClient client = new AirLowFareSearchPortTypeClient(AirLowFareSearchPortTypeClient.EndpointConfiguration.AirLowFareSearchPort, uRL + "/AirService");
+            // //AirLowFareSearchPortTypeClient client = new AirLowFareSearchPortTypeClient(binding, endpoint);
 
-            DeliverySerializationcl_UserAuthentication deliverySerializationcl_UserAuthentication = new DeliverySerializationcl_UserAuthentication();
-            deliverySerializationcl_UserAuthentication.userauthenticationdata = "\"{\"username\":\"" + userName + "\",\"password\":\"" + password + "\"}";
-            
-            DeliveryDetailsClient client = new DeliveryDetailsClient(binding, endpoint);
-            var data = client.getUserAuthenticateAsync(deliverySerializationcl_UserAuthentication).Result;
+            // DeliverySerializationcl_UserAuthentication deliverySerializationcl_UserAuthentication = new DeliverySerializationcl_UserAuthentication();
+            // deliverySerializationcl_UserAuthentication.userauthenticationdata = "\"{\"username\":\"" + userName + "\",\"password\":\"" + password + "\"}";
+
+            // DeliveryDetailsClient client = new DeliveryDetailsClient(binding, endpoint);
+            // var data = client.getUserAuthenticateAsync(deliverySerializationcl_UserAuthentication).Result;
             return "";
         }
         public IActionResult Index()
@@ -190,7 +191,7 @@ namespace WMSWebApp.Controllers
         }
 
         [HttpPost]
-        public IActionResult OnPostMyUploader(IFormFile importFile)
+        public async Task<IActionResult> OnPostMyUploader(IFormFile importFile)
         {
             if (importFile == null) return Json(new { Status = 0, Message = "No File Selected" });
 
@@ -212,7 +213,7 @@ namespace WMSWebApp.Controllers
                         ds = reader.AsDataSet();
                     }
                     //var fileData = GetDataFromCSVFile(ds);
-                    GetDataFromCSVFile(ds);
+                    await GetDataFromCSVFile(ds);
                 }
 
 
@@ -230,7 +231,7 @@ namespace WMSWebApp.Controllers
                 return Json(new { Status = 0, Message = ex.Message });
             }
         }
-        private async void GetDataFromCSVFile(DataSet ds)
+        private async Task GetDataFromCSVFile(DataSet ds)
         {
             try
             {
@@ -245,10 +246,10 @@ namespace WMSWebApp.Controllers
                 List<ItemWiseQty> lstItemWiseQty = GetQtyGroupBySubItem(dt);
 
                 DataTable dtFinalTable = new DataTable();
-                
+
                 dt = RemoveUnwantedColumns(dt);
                 dt = RemoveDuplicateRows(dt);
-                
+
                 var branch = _workContext.GetCurrentBranch().Result;
                 var companyName = _IntrasitHelper.GetAllCompany().Find(x => x.Id == branch.CompanyId).CompanyName;
 
@@ -259,26 +260,26 @@ namespace WMSWebApp.Controllers
                 // var loggedinUser = await _userManager.FindByEmailAsync(email);
                 // var userProfile = _userProfileService.GetByUserId(loggedinUser.Id);
 
-               
+
 
                 _IntrasitHelper.blukUpload(dtFinalTable, dtSerialMapping, recvDate: DateTime.Now, loginBranch: branch.BranchName, companyName);
 
-               // _IntrasitHelper.blukUpload(dtFinalTable, dtSerialMapping, recvDate: DateTime.Now, loginBranch: "Test", "1025");
+                // _IntrasitHelper.blukUpload(dtFinalTable, dtSerialMapping, recvDate: DateTime.Now, loginBranch: "Test", "1025");
 
-                PrepareDataForHitachi(dtFinalTable, lstItemWiseQty);
+                await PrepareDataForHitachi(dtFinalTable, lstItemWiseQty);
 
-               
+
 
             }
             catch (Exception ex)
             {
-               // throw;
+                // throw;
             }
         }
 
         #region classes need to move
 
-       
+
 
         // Root myDeserializedClass = JsonConvert.DeserializeObject<Root>(myJsonResponse);
         public class Extras
@@ -342,13 +343,13 @@ namespace WMSWebApp.Controllers
                 }
             }
         }
-       
-        private DataTable PrepareFinalData(DataTable dtFinalTable, DataTable Copy, List<ItemWiseQty> lstItemWiseQty,string CompanyName)
+
+        private DataTable PrepareFinalData(DataTable dtFinalTable, DataTable Copy, List<ItemWiseQty> lstItemWiseQty, string CompanyName)
         {
             dtFinalTable = CreateFinalTable();
 
             var items = _IntrasitHelper.GetItemSubItemDetails();
-            
+
 
             foreach (DataRow dr in Copy.Rows)
             {
@@ -367,7 +368,7 @@ namespace WMSWebApp.Controllers
                 drFinal["SubItem_Code"] = itemSubItem.SubItemCode;
                 drFinal["Material_Description"] = itemSubItem.MaterialDescription;
                 var qty = lstItemWiseQty.Find(x => x.SubItemName == dr["SubItemName"].ToString() && x.InvoiceNumber == dr["InvoiceNumber"].ToString()).Qty;
-                if (itemSubItem.ItemCode=="SPLIT AC")
+                if (itemSubItem.ItemCode == "SPLIT AC")
                 {
                     drFinal["Qty"] = qty / 2;
                 }
@@ -381,8 +382,8 @@ namespace WMSWebApp.Controllers
             return dtFinalTable;
         }
 
-       
-        private List<GrnNotificationData> PrepareDataForHitachi(DataTable dt, List<ItemWiseQty> lstItemWiseQties)
+
+        private async Task<List<GrnNotificationData>> PrepareDataForHitachi(DataTable dt, List<ItemWiseQty> lstItemWiseQties)
         {
             var groupedData = from row in dt.AsEnumerable()
                               group row by new
@@ -405,12 +406,12 @@ namespace WMSWebApp.Controllers
             {
                 //get data against that invoice number and get only subitemname,qty,bucket,lineitemid,
 
-                DataTable dtTemp =  dt.DefaultView.ToTable(false, "SubItem_Name", "Bucket", "Line_Item_Id", "PurchaseOrder");
+                DataTable dtTemp = dt.DefaultView.ToTable(false, "SubItem_Name", "Bucket", "Line_Item_Id", "PurchaseOrder");
 
 
                 List<Product> lstProducts = new List<Product>();
 
-                foreach(DataRow dr in dtTemp.Rows)
+                foreach (DataRow dr in dtTemp.Rows)
                 {
                     Product p = new Product
                     {
@@ -437,6 +438,11 @@ namespace WMSWebApp.Controllers
                 // Add other columns here if needed
 
                 var jsonValue = System.Text.Json.JsonSerializer.Serialize(lstGrnNotificationData[0]);
+
+                //string encry = EncryptDecrypt.Encrypt(jsonValue, "4e57534b5240313233", "4e57534b5240313233");
+                HitachiConnention connention = new HitachiConnention();
+                await connention.SendGRNToHitachi("");
+
             }
 
             return lstGrnNotificationData;
@@ -448,9 +454,9 @@ namespace WMSWebApp.Controllers
                               group row by new
                               {
                                   SubItemName = row.Field<string>("SubItemName"),
-                                                                                // ItemCode = row.Field<string>("ItemCode"),
+                                  // ItemCode = row.Field<string>("ItemCode"),
                                   InvoiceNumber = row.Field<string>("InvoiceNumber")
-                                                                                // Add other columns you want to group by
+                                  // Add other columns you want to group by
                               }
                            into grouped
                               select new
@@ -504,8 +510,8 @@ namespace WMSWebApp.Controllers
             dtSerialMapping.Columns.Add("SubItemName", typeof(string));
             dtSerialMapping.Columns.Add("SerialNumber", typeof(string));
             dtSerialMapping.Columns.Add("Fifo", typeof(string));
-            
-            
+
+
             dtSerialMapping = dt.DefaultView.ToTable(false, "SubItemName", "SerialNumber", "Fifo");
             dtSerialMapping.Columns["SubItemName"].ColumnName = "SubItem_Name";
             dtSerialMapping.Columns["SerialNumber"].ColumnName = "Serial_Number";
@@ -538,7 +544,7 @@ namespace WMSWebApp.Controllers
             dt.Columns.Add("SourceNumber", typeof(string));
             dt.Columns.Add("Bucket", typeof(string));
             dt.Columns.Add("LineItemId", typeof(string));
-            
+
 
             return dt;
         }
