@@ -439,7 +439,7 @@ namespace WMSWebApp.Controllers
 
                 var jsonValue = System.Text.Json.JsonSerializer.Serialize(lstGrnNotificationData[0]);
 
-                //string encry = EncryptDecrypt.Encrypt(jsonValue, "4e57534b5240313233", "4e57534b5240313233");
+              
                 HitachiConnention connention = new HitachiConnention();
                 await connention.SendGRNToHitachi("");
 
