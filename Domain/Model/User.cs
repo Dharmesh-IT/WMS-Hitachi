@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Domain.Model
+﻿namespace Domain.Model
 {
-    internal class User
+    public class User
     {
+        public string id { get; set; }
+        public string userId { get; set; }
+        public string firstName { get; set; }
+        public string lastName { get; set; }
     }
 }

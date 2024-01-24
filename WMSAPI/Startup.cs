@@ -1,23 +1,19 @@
+using Application.Services.User;
 using AutoMapper;
 using DatabaseLibrary.SQL;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json.Serialization;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using WMS.Data;
 using WMS.Web.Framework.Infrastructure.Extentsion;
 using WMSAPI.Models;
@@ -66,7 +62,7 @@ namespace WMSAPI
             services.AddSingleton<IMapper>(new Mapper(config));
             services.AddSingleton<IAdoConnection>(new AdoConnection(connectionString));
             services.AddSingleton<IFileProvider>(new PhysicalFileProvider(System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "wwwroot")));
-
+            services.AddScoped<IUserService, UserService>();
             services.Configure<IdentityOptions>(options =>
             {
                 // Password settings.
@@ -148,6 +144,13 @@ namespace WMSAPI
             {
                 app.UseDeveloperExceptionPage();
                 
+            }
+            else
+            {
+                app.UseSwaggerUI(c =>
+                {
+                    c.SwaggerEndpoint("v1/swagger.json", "My API V1");
+                });
             }
             app.UseSwagger();
             app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "WMSAPI v1"));

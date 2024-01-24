@@ -49,6 +49,10 @@
 
         public const string BulkImportPo = @"[dbo].[spBulkImportPo]";
 
+        #region
+        public const string VerifyUser = @"[WMS].[VerifyUser]";
+        #endregion
+
 
     }
 }
