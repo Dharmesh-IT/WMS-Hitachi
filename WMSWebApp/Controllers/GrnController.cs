@@ -57,32 +57,33 @@ namespace WMSWebApp.Controllers
             return View();
         }
 
-        public IActionResult Create()
+        public async  Task<IActionResult> Create()
         {
             CreateModel model = new CreateModel();
             model.Vehicles = _venderVehicleService.VendorVehicles().ToList();
 
-            //var branch = await _workContext.GetCurrentBranch();
-            //List<WarehouseModel> warehouseModel = new List<WarehouseModel>();
-            //foreach (var item in branch.BranchWiseWarehouses)
-            //{
-            //    WarehouseModel warehouse = new WarehouseModel();
-            //    warehouse.WarehouseName = item.Warehouse.WarehouseName;
-            //    warehouse.WarehouseCode = item.Warehouse.WarehouseCode;
-            //    warehouse.Id = item.Warehouse.Id;
-            //    List<WarehouseZoneAreaModel> ZoneList = new List<WarehouseZoneAreaModel>();
-            //    foreach (var zone in item.Warehouse.WarehouseZones)
-            //    {
-            //        var Zone = new WarehouseZoneAreaModel();
-            //        Zone.ZoneName = zone.ZoneName;
-            //        Zone.ZoneCode = zone.ZoneCode;
-            //        ZoneList.Add(Zone);
+            var branch = await _workContext.GetCurrentBranch();
+            List<WarehouseModel> warehouseModel = new List<WarehouseModel>();
+            foreach (var item in branch.BranchWiseWarehouses)
+            {
+                WarehouseModel warehouse = new WarehouseModel();
+                warehouse.WarehouseName = item.Warehouse.WarehouseName;
+                warehouse.WarehouseCode = item.Warehouse.WarehouseCode;
+                warehouse.Id = item.Warehouse.Id;
+                List<WarehouseZoneAreaModel> ZoneList = new List<WarehouseZoneAreaModel>();
+                foreach (var zone in item.Warehouse.WarehouseZones)
+                {
+                    var Zone = new WarehouseZoneAreaModel();
+                    Zone.Id = zone.Id;
+                    Zone.ZoneName = zone.ZoneName;
+                    Zone.ZoneCode = zone.ZoneCode;
+                    ZoneList.Add(Zone);
 
-            //    }
-            //    warehouse.ZoneAreaList = ZoneList;
-            //    warehouseModel.Add(warehouse);
-            //}
-            //model.Warehouse = warehouseModel;
+                }
+                warehouse.ZoneAreaList = ZoneList;
+                warehouseModel.Add(warehouse);
+            }
+            model.Warehouse = warehouseModel;
 
             return View(model);
         }
@@ -92,7 +93,7 @@ namespace WMSWebApp.Controllers
         {
             var branch = await _workContext.GetCurrentBranch();
             term = (term == null || term == "") ? "0" : term;
-            var intrasitData = _intrasitService.GetPendingPO(branch.BranchCode, term, 0, int.MaxValue).ToList().GetUniqePo();
+            var intrasitData = _intrasitService.GetPendingPO(branch.BranchCode, term, 0, int.MaxValue).intrasitResult.ToList().GetUniqePo();
             return Json(intrasitData);
 
         }
@@ -103,7 +104,8 @@ namespace WMSWebApp.Controllers
             SentrySdk.CaptureMessage("PODetails() ");
             var branch = await _workContext.GetCurrentBranch();
             SentrySdk.CaptureMessage("PODetails() "+ branch.Id);
-            var intrasitData = _intrasitService.GetPendingPO(branch.BranchCode, pono, 0, int.MaxValue);
+            var intrasitDataResult = _intrasitService.GetPendingPO(branch.BranchCode, pono, 0, int.MaxValue);
+            var intrasitData = intrasitDataResult.intrasitResult;
             int id = 1;
             var data = new DataSourceResult()
             {
@@ -126,6 +128,11 @@ namespace WMSWebApp.Controllers
                     m.ETA = x.ETA;
                     m.Sno = id;
                     m.AllowGRN = false;
+                    m.Line_Item_id = x.Line_Item_id;
+                    m.Source_Number = x.Source_Number;
+                    m.SerialNumbers = intrasitDataResult.itemSerialDetailResult.Where(p=>p.IdInTrasit ==x.Id).
+                    GroupBy(n => n.IdInTrasit).
+                    Select(y => string.Join(",",y.Select(z=>z.Serial_Number).ToArray())).FirstOrDefault();
                     id++;
                     return m;
                 }),
@@ -218,7 +225,7 @@ namespace WMSWebApp.Controllers
             return Json(model);
         }
         [HttpPost]
-        public virtual IActionResult Complete([FromBody] List<CreateModel> model)
+        public virtual IActionResult Complete([FromBody]List<CreateModel> model)
         {
             var branch = _workContext.GetCurrentBranch().Result;
             var intranicRow = _intrasitService.GetById(model.FirstOrDefault().ItemId);
@@ -228,8 +235,8 @@ namespace WMSWebApp.Controllers
             master.BranchCode = branch.BranchCode;
             master.InvoiceNo = model.FirstOrDefault().invoice;
             master.SenderCompany = intranicRow.Sender_Company;
-            master.GRNNumberOfSAP = model.FirstOrDefault().GRNNumberOfSAP;
-            master.IRN = model.FirstOrDefault().IRN;
+            master.LineItemId = model.FirstOrDefault().LineItemId;
+            master.source_number = model.FirstOrDefault().source_number;
             foreach (var item in model)
             {
                 intranicRow = _intrasitService.GetById(item.ItemId);
@@ -297,8 +304,8 @@ namespace WMSWebApp.Controllers
                     m.Id = x.Id;
                     m.InvoiceNo = x.InvoiceNo;
                     m.InvoiceDate = x.InvoiceDate;
-                    m.GRNNumberOfSAP = x.GRNNumberOfSAP;
-                    m.IRN = x.IRN;
+                    m.LineItemId = x.LineItemId;
+                    m.source_number = x.source_number;
                     m.BranchCode = branchCode;
                     var branch = _branchService.GetBranchByCode(branchCode);
                     if (branch != null)
@@ -316,9 +323,13 @@ namespace WMSWebApp.Controllers
         {
             var location = _subItemWarehouseMappingService.GetItemLocation(subItemCode.Replace("\"", "'"));
             SubItemLocationModel m = new SubItemLocationModel();
-            m.LocationId = location.LocationId;
-            m.WareHouseId = location.WareHouseId;
-            m.WareHouseAreaId = location.WareHouseAreaId;
+            if(location != null)
+            {
+                m.LocationId = location.LocationId;
+                m.WareHouseId = location.WareHouseId;
+                m.WareHouseAreaId = location.WareHouseAreaId;
+            }
+            
             return Json(m);
         }
         #endregion

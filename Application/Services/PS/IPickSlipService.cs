@@ -11,6 +11,7 @@ namespace Application.Services.PS
     public partial interface IPickSlipService
     {
         void Insert(PickSlipMaster entity);
+        int InsertAndReturnId(PickSlipMaster entity);
         PickSlipMaster GetbyId(int id);
         void Update(PickSlipMaster entity);
 

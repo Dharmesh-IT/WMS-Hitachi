@@ -18,7 +18,7 @@ namespace Domain.Model.PO
 
         public string request_id { get; set; }
 
-        public string source_number { get; set; }
+        public int source_number { get; set; }
 
         public string client_uuid { get; set; }
 

@@ -5,6 +5,7 @@ using Application.Common;
 using System.Data;
 using DatabaseLibrary;
 using System.Linq;
+using System;
 namespace Application.Services.User
 {
     public class UserService : IUserService
@@ -36,5 +37,36 @@ namespace Application.Services.User
                        }).ToList();
             return emp;
         }
+
+        public void InsertHitachiData(int type,string data)
+        {
+            List<SqlParameter> sqlParameters = new List<SqlParameter>()
+                {
+                    //new SqlParameter("@CompanyId", Item.CompanyId),
+                    new SqlParameter("@type", type),
+                    new SqlParameter("@value", data),
+                     new SqlParameter("@createdDateTime", DateTime.Now)
+                };
+            var result = _adoConnection.InsertUpdateWithSP(Constants.insertRecord, sqlParameters);
+          }
+        public string GetHitachiData(int id)
+        {
+            List<SqlParameter> sqlParameters = new List<SqlParameter>()
+                {
+                    //new SqlParameter("@CompanyId", Item.CompanyId),
+                    new SqlParameter("@id", id)
+                };
+            var result = _adoConnection.GetDatatableFromSqlWithSP("[WMS].[GetHitachiData]", sqlParameters);
+            var emp = (from DataRow row in result.Rows
+                       select new 
+                       {
+                           id = row["Hitachidata"].ToString(),
+                          
+
+
+                       }).ToList();
+            return emp[0].id;
+        }
+
     }
 }

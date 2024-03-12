@@ -94,7 +94,7 @@ namespace WMSAPI.Controllers
         public virtual async Task<IActionResult> PendingPO()
         {
             var branch = await _workContext.GetCurrentBranch();
-            var intrasitData = _intrasitService.GetPendingPO(branch.BranchCode, "0", 0, int.MaxValue).ToList().GetUniqePo();
+            var intrasitData = _intrasitService.GetPendingPO(branch.BranchCode, "0", 0, int.MaxValue).intrasitResult.ToList().GetUniqePo();
             return Json(intrasitData);
 
         }
@@ -105,7 +105,8 @@ namespace WMSAPI.Controllers
             SentrySdk.CaptureMessage("PODetails() ");
             var branch = await _workContext.GetCurrentBranch();
             SentrySdk.CaptureMessage("PODetails() "+ branch.Id);
-            var intrasitData = _intrasitService.GetPendingPO(branch.BranchCode, pono, 0, int.MaxValue);
+            var intrasitDataResult = _intrasitService.GetPendingPO(branch.BranchCode, pono, 0, int.MaxValue);
+            var intrasitData = intrasitDataResult.intrasitResult;
             int id = 1;
             var data = new DataSourceResult()
             {
@@ -231,8 +232,8 @@ namespace WMSAPI.Controllers
             master.BranchCode = branch.BranchCode;
             master.InvoiceNo = model.FirstOrDefault().invoice;
             master.SenderCompany = intranicRow.Sender_Company;
-            master.GRNNumberOfSAP = model.FirstOrDefault().GRNNumberOfSAP;
-            master.IRN = model.FirstOrDefault().IRN;
+           // master.GRNNumberOfSAP = model.FirstOrDefault().GRNNumberOfSAP;
+           // master.IRN = model.FirstOrDefault().IRN;
             foreach (var item in model)
             {
                 intranicRow = _intrasitService.GetById(item.ItemId);
@@ -300,8 +301,8 @@ namespace WMSAPI.Controllers
                     m.Id = x.Id;
                     m.InvoiceNo = x.InvoiceNo;
                     m.InvoiceDate = x.InvoiceDate;
-                    m.GRNNumberOfSAP = x.GRNNumberOfSAP;
-                    m.IRN = x.IRN;
+                  //  m.GRNNumberOfSAP = x.GRNNumberOfSAP;
+                  //  m.IRN = x.IRN;
                     m.BranchCode = branchCode;
                     var branch = _branchService.GetBranchByCode(branchCode);
                     if (branch != null)

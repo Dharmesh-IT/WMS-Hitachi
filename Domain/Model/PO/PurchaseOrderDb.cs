@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using WMS.Core;
 
 namespace Domain.Model.PO
@@ -16,6 +12,9 @@ namespace Domain.Model.PO
         public string POCategory { get; set; }
         public string BranchCode { get; set; }
         public bool ProcessStatus { get; set; } = false;
+        public int shipments_number { get; set; }
+        public DateTime POInsertedDateTime { get; set; }
+        public DateTime? ProcessStatusUpdateDateTime { get; set; }
 
     }
 }

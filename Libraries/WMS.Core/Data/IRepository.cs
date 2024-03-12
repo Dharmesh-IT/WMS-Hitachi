@@ -24,6 +24,12 @@ namespace WMS.Core.Data
         void Insert(TEntity entity);
 
         /// <summary>
+        /// Insert entity
+        /// </summary>
+        /// <param name="entity">Entity</param>
+        int InsertAndReturnId(TEntity entity);
+
+        /// <summary>
         /// Insert the entity entry
         /// </summary>
         /// <param name="entity">Entity entry</param>

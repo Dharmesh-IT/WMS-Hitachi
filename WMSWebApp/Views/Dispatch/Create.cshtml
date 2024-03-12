@@ -58,7 +58,7 @@
                         <div class="card-header">
                             <h3 class="card-title">Dispatch</h3>
                         </div>
-                        <form id="Create" asp-action="Create" asp-controller="Dispatch">
+                        <form id="Create" method="post" asp-action="Create" asp-controller="Dispatch">
                             <div class="card-body">
                                 <div asp-validation-summary="ModelOnly" class="text-red-500"></div>
                                 <div class="row">
@@ -79,9 +79,14 @@
                                     </div>
                                     <div class="form-group col-md-2">
                                         <label>Dispatch Date</label>
-                                        <input class="form-control" name="DispatchDate" id="DispatchDate" required readonly />
+                                        <input class="form-control" name="DispatchDate" id="DispatchDate" onkeydown="return false;" required  />
                                         <span asp-validation-for="DispatchDate" class="text-danger"></span>
                                     </div>
+                                <div class="form-group col-md-2">
+                                    <label>Delivered Date</label>
+                                    <input class="form-control" name="DeliveredDate" id="DeliveredDate" onkeydown="return false;" required />
+                                    <span asp-validation-for="DeliveredDate" class="text-danger"></span>
+                                </div>
                                     <div class="form-group col-md-3">
                                         <label>Vendor Name</label>
                                         <input class="form-control" asp-for="VendorName" required />
@@ -94,7 +99,7 @@
                                     </div>
                                     <div class="form-group col-md-2">
                                         <label>Location</label>
-                                        <input class="form-control" asp-for="Location" required />
+                                    <input class="form-control" asp-for="Location" required readonly />
                                         <span asp-validation-for="Location" class="text-danger"></span>
                                     </div>
                                     <div class="form-group col-md-2">
@@ -103,7 +108,7 @@
                                         <span asp-validation-for="DocketNo" class="text-danger"></span>
                                     </div>
                                     <div class="form-group col-md-2">
-                                        <label>LR No</label>
+                                    <label>LR No (waybill)</label>
                                         <input class="form-control" asp-for="LRNo" required />
                                         <span asp-validation-for="LRNo" class="text-danger"></span>
                                     </div>
@@ -172,10 +177,15 @@
     <script>
         $(document).ready(function () {
             $(function () {
-                $("#DispatchDate").datepicker({
-                    dateFormat: 'dd/mm/yy',
-                    defaultDate: new Date()
+                $("#DispatchDate").kendoDateTimePicker({
+                    format: 'yyyy-MM-dd HH:mm:ss'
+                    
                 });
+                $("#DeliveredDate").kendoDateTimePicker({
+                    format: 'yyyy-MM-dd HH:mm:ss'
+                });
+
+
             });
             $("#InvoiceId").select2();
             $("#InvoiceId").change(function () {
@@ -195,6 +205,7 @@
                              grid.dataSource.add(data[i]);
                         }
                        $("#PO").val(data[0].PONumber);
+                       $("#Location").val(data[0].Address);
                         toastr.success('Item  successfully added into list.');
                     }
                 });

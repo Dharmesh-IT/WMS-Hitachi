@@ -38,20 +38,20 @@ namespace WMSAPI.Controllers
 
         [HttpPost]
 
-        public IActionResult Index(string userauthenticationdata)
+        public IActionResult Index([FromBody]UserAuthenticationData userauthenticationdata)
         {
-            var dataAuth = new DataAuth();
+           // var dataAuth = new DataAuth();
             var root = new Models.Root();
             var data1 = new Models.Data();
-            string authKey = _configuration.GetValue<string>("Credential:authKey");
-            string authValue = _configuration.GetValue<string>("Credential:authValue");
-
+            string authKey = "4e57534b52403132";
+            string authValue = "4e57534b52403132";
+            var keybytes = Encoding.UTF8.GetBytes(authKey);// 4e57534b52403132
+            var iv = Encoding.UTF8.GetBytes(authKey);//
             string userauthenticationresponsedata;
             try
             {
-                var keybytes = Encoding.UTF8.GetBytes(authKey);// 4e57534b52403132
-                var iv = Encoding.UTF8.GetBytes(authKey);//
-                var data = GenericMethods.DecryptClassObject(userauthenticationdata, authKey, authValue);
+                _userService.InsertHitachiData(1, userauthenticationdata.userauthenticationdata);
+                var data = GenericMethods.DecryptClassObject(userauthenticationdata.userauthenticationdata, authKey, authValue);
                 var login = JsonConvert.DeserializeObject<Login>(data);
                 var result = _userService.VerifyUser(login.username, login.password);
 
@@ -70,10 +70,10 @@ namespace WMSAPI.Controllers
                     root.data = data1;
                     root.success = true;
                     root.message = "Login successful";
-                    dataAuth.Root = root;
-                    var jsonValue = System.Text.Json.JsonSerializer.Serialize(dataAuth);
-                    var result1 = EncryptDecrypt.Encrypt(jsonValue, authKey, authValue);
-                    userauthenticationresponsedata = result1;
+                   
+                    var jsonValue = JsonConvert.SerializeObject(root);
+                    string encryprtedResponse = Convert.ToBase64String(Encryption.EncryptStringToBytes(jsonValue, keybytes, iv));
+                    userauthenticationresponsedata = encryprtedResponse;
                 }
                 else
                 {
@@ -82,10 +82,9 @@ namespace WMSAPI.Controllers
                     root.data = data1;
                     root.success = false;
                     root.message = "Login failed";
-                    dataAuth.Root = root;
-                    var jsonValue = System.Text.Json.JsonSerializer.Serialize(dataAuth);
-                    var result1 = EncryptDecrypt.Encrypt(jsonValue, authKey, authValue);
-                    userauthenticationresponsedata = result1;
+                    var jsonValue = JsonConvert.SerializeObject(root);
+                    string encryprtedResponse = Convert.ToBase64String(Encryption.EncryptStringToBytes(jsonValue, keybytes, iv));
+                    userauthenticationresponsedata = encryprtedResponse;
                 }
             }
             catch (Exception ex)
@@ -94,10 +93,9 @@ namespace WMSAPI.Controllers
                 root.data = data1;
                 root.success = false;
                 root.message = "Login failed";
-                dataAuth.Root = root;
-                var jsonValue = System.Text.Json.JsonSerializer.Serialize(dataAuth);
-                var result1 = EncryptDecrypt.Encrypt(jsonValue, authKey, authValue);
-                userauthenticationresponsedata = result1;
+                var jsonValue = JsonConvert.SerializeObject(root);
+                string encryprtedResponse = Convert.ToBase64String(Encryption.EncryptStringToBytes(jsonValue, keybytes, iv));
+                userauthenticationresponsedata = encryprtedResponse;
             }
             return Ok(new { userauthenticationresponsedata });
         }
@@ -116,7 +114,7 @@ namespace WMSAPI.Controllers
         }
         [HttpPost]
         [Route("GetEncryptedString")]
-        public string GetEncryptedString([FromBody] object login,int type)
+        public string GetEncryptedString([FromBody] object login,int type,string tempText)
         {
             string jsonAuth = string.Empty;
             Login loginObj = null;
@@ -136,6 +134,9 @@ namespace WMSAPI.Controllers
                     saleOrderObj = JsonConvert.DeserializeObject<SaleOrderViewModel>(login.ToString());
                     jsonAuth = JsonConvert.SerializeObject(saleOrderObj);
                     break;
+                case 4:
+                    jsonAuth = tempText;
+                    break;
 
             }
             byte[] keybytes = Encoding.UTF8.GetBytes("4e57534b52403132");
@@ -145,6 +146,15 @@ namespace WMSAPI.Controllers
             string encryprtedRequest = Convert.ToBase64String(encrypted);
             return encryprtedRequest;
         }
+
+
+        [HttpPost]
+        [Route("GetDecryptedString")]
+        public string GetDecryptedString(string key)
+        {
+            return GenericMethods.Decrypt(key, "4e57534b52403132", "4e57534b52403132");
+        }
+
 
     }
 }

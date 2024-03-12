@@ -55,6 +55,32 @@ namespace Application.Services
             return result > 0 ? true : false;
         }
 
+        public bool CreateNewIntrasitSPFromAGN(IntrasitDb intrasit)
+        {
+            int result = 0;
+            List<SqlParameter> sqlParameters;
+            if (intrasit != null)
+            {
+                sqlParameters = new List<SqlParameter>()
+                {
+                    new("@CreatedDateTimeStamp", intrasit.CreatedDateTimeStamp),
+                    new("@fulfillment_center_uuid", intrasit.fulfillment_center_uuid),
+                    new("@agn_type", intrasit.agn_type),
+                    new("@mode_of_transport", intrasit.mode_of_transport),
+                    new("@client_uuid", intrasit.client_uuid),
+                    new("@request_id", intrasit.request_id),
+                    new("@SubItem_Code", intrasit.SubItem_Code),
+                    new("@PendingToProcessQuantity", intrasit.PendingToProcessQuantity),
+                    new("@Source_Number", intrasit.Source_Number),
+                    new("@LineItemId", intrasit.Line_Item_id),
+                    new("@ETA", intrasit.ETA),
+                    new("@Qty", intrasit.Qty)
+                };
+                result = _adoConnection.InsertUpdateWithSP(Constants.CreateNewIntrasitSPFromAGN, sqlParameters);
+            }
+            return result > 0 ? true : false;
+        }
+
         public bool DeleteIntrasitById(int Id)
         {
             // throw new NotImplementedException();
@@ -172,6 +198,56 @@ namespace Application.Services
             return lstItemSubItem;
         }
 
+        public List<ItemSubItemDb> GetItemSubItemDetails(string subItemCode)
+        {
 
+            List<ItemSubItemDb> lstItemSubItem = new List<ItemSubItemDb>();
+            DataTable dt = _adoConnection.GetDatatableFromSqlWithSP(Constants.GetDetailForItemSubItemBySubItemCode, 
+                new List<SqlParameter> { new SqlParameter("@SubItemCode", subItemCode) });
+
+            foreach (DataRow dr in dt.Rows)
+            {
+                lstItemSubItem.Add(new ItemSubItemDb
+                {
+                    ItemId = Convert.ToInt32(dr["Id"]),
+                    SubItemCode = dr["SubItemCode"].ToString(),
+                    SubItemName = dr["SubItemName"].ToString(),
+                    MaterialDescription = dr["MaterialDescription"].ToString(),
+                    ItemCode = dr["ItemCode"].ToString(),
+                    ItemName = dr["ItemName"].ToString(),
+
+                });
+            }
+
+            //   throw new NotImplementedException();
+            return lstItemSubItem;
+        }
+
+        public List<InventoryStockItemDetails> GetItemDetailsForPickSlip(string subItemCode,int warehouseId)
+        {
+
+            List<InventoryStockItemDetails> lstItem = new List<InventoryStockItemDetails>();
+            DataTable dt = _adoConnection.GetDatatableFromSqlWithSP(Constants.GetItemsForPickSlip,
+                new List<SqlParameter> { new SqlParameter("@SubItemCode", subItemCode), new SqlParameter("@WarehouseId", warehouseId) });
+
+            foreach (DataRow dr in dt.Rows)
+            {
+                lstItem.Add(new InventoryStockItemDetails
+                {
+                    IntransitId = Convert.ToInt32(dr["IntransitId"]),
+                    ReceivedDate = Convert.ToDateTime(dr["Recv_Date"]),
+                    Serial_Number = dr["Serial_Number"].ToString(),
+                    AreaId = Convert.ToInt32(dr["AreaId"]),
+                    Qty = Convert.ToInt32(dr["Qty"]),
+                    Fifo = dr["Fifo"].ToString(),
+                    Id = Convert.ToInt32(dr["Id"]),
+                    Location = dr["Location"].ToString(),
+                    InventoryId = Convert.ToInt32(dr["InventoryId"])
+                });
+            }
+
+            //   throw new NotImplementedException();
+            return lstItem;
+        }
     }
 }

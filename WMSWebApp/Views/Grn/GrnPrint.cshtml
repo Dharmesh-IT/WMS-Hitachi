@@ -5,7 +5,7 @@
 @using Application.Services;
 
 @inject IGoodReceivedNoteMasterService _goodReceivedNoteMasterService;
-@inject ICompanyHelper _companyService;
+@inject IBranchHelper _branchService;
 @inject IWarehouseService _wareHouseService;
 
 @{
@@ -122,10 +122,10 @@
             <tr>
                 <td colspan="2" style="width:4.5in" class="store-info">
                     @{
-                        var companyInfo = _companyService.GetCompanyByCode(GRN.BranchCode);
+                        var companyInfo = _branchService.GetBranchByCode(GRN.BranchCode);
                         var areaInfo = _wareHouseService.GetWarehouseZoneAreaById(GRN.GoodReceivedNoteDetails.FirstOrDefault().AreaId);
                     }
-                    <div class="company-name">@companyInfo.CompanyName</div>
+                    <div class="company-name">@companyInfo.BranchName</div>
                     <div>Address<br />@companyInfo.Address</div>
                     <div>Location - @companyInfo.Location</div>
                     <div>Branch Code - @GRN.BranchCode</div>
@@ -211,8 +211,11 @@
                         <td class="sku">@GRN.InvoiceDate</td>
                         <td align="right">@item.Qty</td>
                         <td align="center">@GRN.SenderCompany</td>
-                        <td align="right">@GRN.GRNNumberOfSAP</td>
-                        <td align="right">@GRN.IRN</td>
+                        @*<td align="right">@GRN.GRNNumberOfSAP</td>
+                         <td align="right">@GRN.IRN</td>*@
+                        <td align="right">@GRN.LineItemId</td>
+                        <td align="right">@GRN.source_number</td>
+
                     </tr>
                 }
 

@@ -37,6 +37,7 @@
 
         public const string CreateNewIntrasItSP = @"[WMS].[IntrasitInsert]";
         public const string GetAllIntrasitSP = @"[WMS].[IntrasitGetAll]";
+        public const string CreateNewIntrasitSPFromAGN = @"[WMS].[AddAGNIntoIntrasit]";
         //public const string BulkImportintransit = @"[dbo].[spBulkImportIntransit]";
         //public const string BulkImportintransit = @"[dbo].[spBulkImportIntransitHitachi]";
         public const string BulkImportintransit = @"[dbo].[spBulkImportIntransitHitachiV1]";
@@ -48,9 +49,11 @@
         public const string GetSubItemCustAmtSP = @"[WMS].[SubItemGetByName]";
 
         public const string BulkImportPo = @"[dbo].[spBulkImportPo]";
-
+        public const string GetDetailForItemSubItemBySubItemCode = @"[WMS].[ItemSubItemGetAllDetailsBySubItemCode]";
+        public const string GetItemsForPickSlip = @"[WMS].[GetItemForPickSlip]";
         #region
         public const string VerifyUser = @"[WMS].[VerifyUser]";
+        public const string insertRecord = @"[WMS].[InsertHitachiData]";
         #endregion
 
 

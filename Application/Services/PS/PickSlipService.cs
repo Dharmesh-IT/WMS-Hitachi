@@ -32,6 +32,11 @@ namespace Application.Services.PS
             _pickSlipMasterRepository.Insert(entity);
         }
 
+        public virtual int InsertAndReturnId(PickSlipMaster entity)
+        {
+           return _pickSlipMasterRepository.InsertAndReturnId(entity);
+        }
+
         public virtual PickSlipMaster GetbyId(int id)
         {
             return _pickSlipMasterRepository.GetById(id);
@@ -46,7 +51,7 @@ namespace Application.Services.PS
             var query = from x in _pickSlipMasterRepository.Table
                         select x;
             if (!string.IsNullOrEmpty(pickslipName))
-                query = query.Where(x => x.Id.ToString().Contains(pickslipName));
+                query = query.Where(x => x.PickSlipName.Contains(pickslipName));
             query = query.Where(x => x.BranchCode == branchCode);
 
             query = query.OrderByDescending(x => x.Id);

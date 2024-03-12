@@ -19,8 +19,11 @@ namespace WMSWebApp.ViewModels.Report
        
         public string Area { get; set; }
 
-        public string SAPNO { get; set; }
-        public string IRN { get; set; } 
+        // public string SAPNO { get; set; }
+        public int LineItemId { get; set; }
+        //public string IRN { get; set; }
+        public string source_number { get; set; }
+
 
     }
 }

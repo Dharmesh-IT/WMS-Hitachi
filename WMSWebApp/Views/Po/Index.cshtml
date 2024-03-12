@@ -63,10 +63,8 @@
                                 <label>Doc Type</label>
                                 <select class="form-control" id="doctypelist">
                                     @* <option value="Select">Select</option>*@
-                                    <option value="StockTransfer PO">StockTransfer PO</option>
-                                    <option value="Sale PO">Sale PO</option>
-                                    <option value="SRN PO">SRN PO</option>
-                                    <option value="ServiceOrder PO">ServiceOrder PO</option>
+                                    @* <option value="StockTransfer PO">AGN</option> *@
+                                    <option value="Sale PO">Sales Order</option>
                                 </select>
                             </div>
                         </div>
@@ -159,138 +157,250 @@
      }
      $(document).ready(function ()
      {
-         $('#search').click(function () {
-             debugger;
-                //search
-                var grid = $('#pick-grid').data('kendoGrid');
-                grid.dataSource.read();
-                return false;
-          });
-             var initialLoad = true;
-              $("#pick-grid").kendoGrid({
-        toolbar: ["excel"],
-        excel: {
-            fileName: "PoList.xlsx",
-            proxyURL: "/Po/List",
-            filterable: true
-        },
-        dataSource: {
-
-            transport: {
-                read: {
-                    url: "/Po/List",
-                    type: "POST",
-                    dataType: "json",
-                    data: additionalData,
-                    complete: function (result) {
-                        console.log("Remote built-in transport", result);
-                        if (result.status == 401) {
-                            /* document.location.href = "@Html.Raw(Url.Action("Index", "AccessDenied"))";*/
-                        }
-                    }
-
-                }
-            },
-            schema: {
-                data: "Data",
-                total: "Total",
-                errors: "Errors"
-            },
-            error: function (e) {
-                //display_kendoui_grid_error(e);
-                // Cancel the changes
-                console.log(e)
-                this.cancelChanges();
-            },
-            pageSize: 20,
-            sortable: true,
-            serverPaging: true,
-            serverSorting: true,
-            requestStart: function () {
-                if (initialLoad) //<-- if it's the initial load, manually start the spinner
-                    kendo.ui.progress($("#booking-grid"), true);
-            },
-            requestEnd: function () {
-                if (initialLoad)
-                    kendo.ui.progress($("#booking-grid"), false);
-                initialLoad = false; //<-- make sure the spinner doesn't fire again (that would produce two spinners instead of one)
-
-            },
-
-        },
-        //selectable: 'raw',
-        //change: onChange,
-        height: 350,
-        pageable: {
-            refresh: true,
-            pageSizes: true
-        },
-
-        scrollable: true,
-        columns: [{
+         var agnColumns = [{
             field: "Id",
             title: "Id",
             width: 50
         },
         {
-            field: "PoNumber",
-            title: "Po Number",
+            field: "source_number",
+            title: "Source Number",
             width: 100
         },
            {
-            field: "stockTransferPOCatagry",
-            title: "PO Catagry",
+            field: "client_uuid",
+            title: "Client UUID",
             width: 100
         },
         {
-            field: "stockTransferPoSendingTo",
-            title: "Sending To",
+            field: "fulfillment_center_uuid",
+            title: "FulFillment Center UUID",
             width: 100
         },
         {
-            field: "stockTransferPoItem",
-            title: "Item",
+            field: "mode_of_transport",
+            title: "Mode of Transport",
             width: 100
         },
          {
-            field: "stockTransferPoSubitem",
-            title: "Sub Item",
+            field: "expected_arrival_date",
+            title: "Expected Arrival Date",
             width: 100
         },
         {
-            field: "stockTransferPoQty",
-            title: "Qty",
+            field: "agn_type",
+            title: "Agn Type",
             width: 100
         },
        {
-            field: "stockTransferPoSerialNumber",
-            title: "Serial Number",
+            field: "quantity",
+            title: "Quantity",
             width: 100
         },
         {
-            field: "subItemCode",
-            title: "SubItem Code",
+            field: "sku",
+            title: "Product Sku",
             width: 100
         },
+        {
+            field: "line_itemid",
+            title: "Line Item Id",
+            width: 100
+        }];
 
+         var saleOrderColumn = [{
+             field: "Id",
+             title: "Id",
+             width: 100
+         },
+         {
+             field: "order_number",
+             title: "Order Number",
+             width: 100,
+             locked: true,
+             lockable: false,
+         },
+         {
+             field: "order_date",
+             title: "Order Date",
+             width: 100
+         },
+         {
+                field: "order_type",
+             title: "Order Type",
+             width: 100
+         },
+         {
+                field: "shipments_number",
+             title: "Shipments Number",
+             width: 100
+         },
+         {
+                field: "invoiceNumber",
+             title: "Invoice Number",
+             width: 100
+         },
+         {
+                field: "payment_mode",
+             title: "Payment Mode",
+             width: 100
+         },
+         {
+                field: "total_price",
+             title: "Total Price",
+             width: 100
+         },
+            {
+                field: "cod_amount",
+                title: "Cod amount",
+                width: 100
+            },
+            {
+                title: "Download Invoice",
+                width: 100,
+                template: returnHyperLinkhtml
+            },
+            {
+                field: "orderline_number",
+                title: "OrderLine Number",
+                width: 100
+            },
+            {
+                field: "product_sku",
+                title: "Product Sku",
+                width: 100
+            },
+            {
+                field: "orderline_bucket",
+                title: "Order Line Bucket",
+                width: 100
+            }
+                ,
+            {
+                field: "quantity",
+                title: "Quantity",
+                width: 100
+            },
+            {
+                field: "client_id",
+                title: "Client Id",
+                width: 100
+            },
+            {
+                field: "invoice_payment_mode",
+                title: "Invoice Payment Mode",
+                width: 100
+            },
+            {
+                field: "invoice_total_price",
+                title: "Invoice Total Price",
+                width: 100
+            },
+            {
+                field: "invoice_cod_amount",
+                title: "Invoice Cod Amount",
+                width: 100
+            },
+            {
+                field: "consigneeAddress",
+                title: "Consignee Address",
+                width: 400
+            }
+         ];
+            var gridColumns = $("#doctypelist").val() == "StockTransfer PO" ? agnColumns : saleOrderColumn;
+         $('#search').click(function () {
+             
+                //search
+                 gridColumns = $("#doctypelist").val() == "StockTransfer PO" ? agnColumns : saleOrderColumn;
+             GridLoad();
+                return false;
+          });
+            function returnHyperLinkhtml(container) {
 
-            //{
-            //    field: "Unit",
-            //    title: "Unit",
-            //    width: 100
-            //},
+                let buttonText = "";
+                if (container.isInvoice)
+                buttonText = "<a class='k-button' href='Po/Download?invoiceNumber=" + container.invoiceNumber + "'>Download</a>";
+                   
+                return buttonText;
+            }
+            function GridLoad() {
+                var initialLoad = true;
+              $("#pick-grid").empty();
+                $("#pick-grid").kendoGrid({
+                    toolbar: ["excel"],
+                    excel: {
+                        fileName: "PoList.xlsx",
+                        proxyURL: "/Po/List",
+                        filterable: true
+                    },
+                    dataSource: {
 
+                        transport: {
+                            read: {
+                                url: "/Po/List",
+                                type: "POST",
+                                dataType: "json",
+                                data: additionalData,
+                                complete: function (result) {
+                                    console.log("Remote built-in transport", result);
+                                    if (result.status == 401) {
+                                        /* document.location.href = "@Html.Raw(Url.Action("Index", "AccessDenied"))";*/
+                                    }
+                                }
 
-            //{
-            //    field: "Amt",
-            //    title: "Amt",
-            //    width: 100
-            //},
+                            }
+                        },
+                        schema: {
+                            data: "Data",
+                            total: "Total",
+                            errors: "Errors"
+                        },
+                        error: function (e) {
+                            //display_kendoui_grid_error(e);
+                            // Cancel the changes
+                            console.log(e)
+                            this.cancelChanges();
+                        },
+                        pageSize: 20,
+                        sortable: true,
+                        serverPaging: true,
+                        serverSorting: true,
+                        requestStart: function () {
+                            if (initialLoad) //<-- if it's the initial load, manually start the spinner
+                                kendo.ui.progress($("#booking-grid"), true);
+                        },
+                        requestEnd: function () {
+                            if (initialLoad)
+                                kendo.ui.progress($("#booking-grid"), false);
+                            initialLoad = false; //<-- make sure the spinner doesn't fire again (that would produce two spinners instead of one)
 
+                        },
 
-        ],
+                    },
+                    //selectable: 'raw',
+                    //change: onChange,
+                    height: 550,
+                    width: 1350,
+                    pageable: {
+                        refresh: true,
+                        pageSizes: true
+                    },
 
-    });
+                    scrollable: true,
+                    columns: gridColumns,
+
+                });
+                $("#pick-grid").kendoTooltip({
+                    filter: "th", // Select the th elements of the Grid.
+                    position: "right",
+                    width: 250,
+                    content: function (e) {
+                        // Return the text content of the hovered header.
+                        return e.target.text();
+                    }
+                }).data("kendoTooltip");
+          }
+         GridLoad();
      });
 
       $("#fileUploadForm").submit(function(e) {

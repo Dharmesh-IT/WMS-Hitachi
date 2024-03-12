@@ -10,6 +10,7 @@
         public string SerialNo { get; set; }
         public int Qty { get; set; }
         public decimal Amt { get; set; }
+        public string Address { get; set; }
 
         public string MaterialDescription { get; set; }
         public string AreaCode { get; set; }

@@ -142,8 +142,14 @@
                     @{
                         if (pickSlip.DockType == "Sale PO")
                         {
-                            var sender = _salePo.GetById(pickSlip.POID);
-                            <div>@sender.SalePOSendingTo</div>
+                            var sender = _salePo.GetSalesPoForPrint(pickSlip.POID.ToString());
+                            @if(sender != null)
+                            {
+                                <div>@sender.consignee_name @sender.consignee_address_line1 </div>
+                                <div>@sender.consignee_pin_code @sender.consignee_city @sender.consignee_state</div>
+                                <div>@sender.consignee_primary_phone_number</div>
+                            }
+                            
                             //<div>[Recipient Address]</div>
                         }
                     }
@@ -212,7 +218,7 @@
                         <td>@subitem.MaterialDescription</td>
                         <td align="right" class="price">0</td>
                         <td align="center">@item.Qty</td>
-                        <td align="right" class="price">@location == null ? "" : @location.AreaName  </td>
+                        <td align="right" class="price">@(location == null ? "" : location.AreaName)  </td>
                     </tr>
                 }
 

@@ -12,10 +12,13 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Net;
 using System.Threading.Tasks;
 using WMS.Data;
 using WMS.Web.Framework.Infrastructure.Extentsion;
 using WMSWebApp.ViewModels.PO;
+using System.Net.Http.Headers;
 
 namespace WMSWebApp.Controllers
 {
@@ -64,61 +67,97 @@ namespace WMSWebApp.Controllers
             return View();
         }
         [HttpPost]
-        public virtual IActionResult List(DataSourceRequest request, string category)
+        public virtual async Task<IActionResult> List(DataSourceRequest request, string category)
         {
+            var branch = await _workContext.GetCurrentBranch();
             switch (category)
             {
 
-                case "StockTransfer PO":
-                    var result = _stockTransferPo.GetDetails(category, request.Page - 1, request.PageSize);
+                case "StockTransfer PO": //AGN
+                    var result = _stockTransferPo.GetDetails(category, branch.BranchCode, request.Page - 1, request.PageSize);
                     var gridData = new DataSourceResult()
                     {
                         Data = result.Select(x =>
                         {
                             PolistViewModel m = new PolistViewModel();
                             m.Id = x.Id;
-                            m.PoNumber = x.PONumber;
-                            m.stockTransferPOCatagry = x.StockTransferPOCategory;
-                            m.stockTransferPoSendingTo = x.StockTransferPOSendingTo;
-                            m.stockTransferPoItem = x.StockTransferPOItem;
-                            m.stockTransferPoSubitem = x.StockTransferPOSubItem;
-                            m.stockTransferPoQty = x.StockTransferPOQty.ToString();
-                            m.stockTransferPoAmt = x.StockTransferPOAmt;
-                            m.stockTransferPoSerialNumber = x.StockTransferPOSerialNumber;
-                            m.serviceCategory = "Not Applicable";
-                            m.salePo = "Not Applicable";
-                            m.saleDate = "Not Applicable";
-                            m.ServiceRequestNumber = "Not Applicable";
-                            m.subItemCode = x.SubItemCode;
-                            m.invNumber = "";
+                            //m.PoNumber = x.PONumber;
+                            //m.stockTransferPOCatagry = x.StockTransferPOCategory;
+                            //m.stockTransferPoSendingTo = x.StockTransferPOSendingTo;
+                            //m.stockTransferPoItem = x.StockTransferPOItem;
+                            //m.stockTransferPoSubitem = x.StockTransferPOSubItem;
+                            //m.stockTransferPoQty = x.StockTransferPOQty.ToString();
+                            //m.stockTransferPoAmt = x.StockTransferPOAmt;
+                            //m.stockTransferPoSerialNumber = x.StockTransferPOSerialNumber;
+                            //m.serviceCategory = "Not Applicable";
+                            //m.salePo = "Not Applicable";
+                            //m.saleDate = "Not Applicable";
+                            //m.ServiceRequestNumber = "Not Applicable";
+                            //m.subItemCode = x.SubItemCode;
+                            //m.invNumber = "";
+
+                            m.source_number = x.source_number;
+                            m.client_uuid = x.client_uuid;
+                            m.fulfillment_center_uuid = x.fulfillment_center_uuid;
+                            m.mode_of_transport = x.mode_of_transport;
+                            m.expected_arrival_date = x.expected_arrival_date;
+                            m.agn_type = x.agn_type;
+                            m.quantity = x.quantity;
+                            m.sku = x.sku;
+                            m.line_itemid = x.line_itemid;
                             return m;
                         }),
 
                         Total = result.TotalCount
                     };
                     return Json(gridData);
-                case "Sale PO":
-                    var result1 = _salePo.GetDetails(category, request.Page - 1, request.PageSize);
+                case "Sale PO": //Sales Order
+                    var result1 = _salePo.GetDetails(category, branch.BranchCode, request.Page - 1, request.PageSize);
                     var gridData1 = new DataSourceResult()
                     {
                         Data = result1.Select(x =>
                         {
-                            PolistViewModel m = new PolistViewModel();
-                            m.Id = x.Id;
-                            m.PoNumber = x.PONumber;
-                            m.stockTransferPOCatagry = x.SalePOCategory;
-                            m.stockTransferPoSendingTo = x.SalePOSendingTo;
-                            m.stockTransferPoItem = x.SalePOItem;
-                            m.stockTransferPoSubitem = x.SalePOSubItem;
-                            m.stockTransferPoQty = x.SalePOQty.ToString();
-                            m.stockTransferPoAmt = x.SalePOAmt;
-                            m.stockTransferPoSerialNumber = x.SalePOSerialNumber;
-                            m.serviceCategory = "Not Applicable";
-                            m.salePo = "Not Applicable";
-                            m.saleDate = "Not Applicable";
-                            m.ServiceRequestNumber = "Not Applicable";
-                            m.subItemCode = x.SubItemCode;
-                            m.invNumber = "";
+                            SaleViewModel m = new SaleViewModel()
+                            {
+                                Id = x.Id,
+                                order_number = x.order_number,
+                                order_date = x.order_date,
+                                order_type = x.order_type,
+                                shipments_number = x.shipments_number,
+                                invoiceNumber = x.invoiceNumber,
+                                payment_mode = x.payment_mode,
+                                total_price = x.total_price,
+                                cod_amount = x.cod_amount,
+                                orderline_number = x.orderline_number,
+                                product_sku = x.product_sku,
+                                orderline_bucket = x.orderline_bucket,
+                                quantity = x.quantity,
+                                client_id = x.client_id,
+                                isInvoice = !string.IsNullOrEmpty(x.invoice_url),
+                                invoice_payment_mode = x.invoice_payment_mode,
+                                invoice_total_price = x.invoice_total_price,
+                                invoice_cod_amount = x.invoice_cod_amount,
+                                consigneeAddress = $"{x.consignee_name},{x.consignee_address_line1}," +
+                              $"{x.consignee_pin_code} - {x.consignee_city}, {x.consignee_state}, {x.consignee_country}" +
+                              $", Phone : {x.consignee_primary_phone_number}"
+                            };
+                            
+                            
+                            //m.PoNumber = x.PONumber;
+                            //m.stockTransferPOCatagry = x.SalePOCategory;
+                            //m.stockTransferPoSendingTo = x.SalePOSendingTo;
+                            //m.stockTransferPoItem = x.SalePOItem;
+                            //m.stockTransferPoSubitem = x.SalePOSubItem;
+                            //m.stockTransferPoQty = x.SalePOQty.ToString();
+                            //m.stockTransferPoAmt = x.SalePOAmt;
+                            //m.stockTransferPoSerialNumber = x.SalePOSerialNumber;
+                            //m.serviceCategory = "Not Applicable";
+                            //m.salePo = "Not Applicable";
+                            //m.saleDate = "Not Applicable";
+                            //m.ServiceRequestNumber = "Not Applicable";
+                            //m.subItemCode = x.SubItemCode;
+                            //m.invNumber = "";
+
                             return m;
                         }),
                         Total = result1.TotalCount
@@ -183,6 +222,22 @@ namespace WMSWebApp.Controllers
             return Json("");
         }
 
+        public IActionResult Download(string invoiceNumber)
+        {
+            try
+            {
+                string invoiceUrl = Convert.ToString(_salePo.GetInvoiceBase64Data(invoiceNumber));
+                byte[] pdfBytes = Convert.FromBase64String(invoiceUrl);
+                SuccessNotification("Invoice Downloaded Successfully. Please check downloads.");
+                return File(pdfBytes, "application/pdf", invoiceNumber + ".pdf");
+            }
+            catch (Exception e)
+            {
+                ErrorNotification("Invoice Not Downloaded Successfully. Please try again later. Error Message :"+ e.Message);
+            }
+            return null;
+           
+        }
         public ActionResult Create()
         {
             PurchaseOrderViewModel purchaseOrderViewModel = new PurchaseOrderViewModel();

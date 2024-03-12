@@ -15,7 +15,8 @@ namespace WMSWebApp.ViewModels.Dispatch
         //[DataType(DataType.Date)]
         //[DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:MM/dd/yyyy}")]
         
-        public string DispatchDate { get; set; }
+        public DateTime DispatchDate { get; set; }
+        public DateTime DeliveredDate { get; set; }
         public string PO { get; set; }
         public string VendorName { get; set; }
         public string VehicleNumber { get; set; }

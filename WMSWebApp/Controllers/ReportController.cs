@@ -87,8 +87,8 @@ namespace WMSWebApp.Controllers
                     m.Amount = x.Amount;
                     var area = _warehouseService.GetWarehouseZoneAreaById(x.AreaId);
                     m.Area = area.AreaName;
-                    m.IRN = x.GoodReceivedNoteMaster.IRN;
-                    m.SAPNO = x.GoodReceivedNoteMaster.GRNNumberOfSAP;
+                    m.source_number = x.GoodReceivedNoteMaster.source_number;
+                    m.LineItemId = x.GoodReceivedNoteMaster.LineItemId;
 
                     return m;
                 }),

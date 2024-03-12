@@ -19,7 +19,7 @@ namespace WMSAPI.ViewModels
 
     public class AGNViewModel
     {
-        public string source_number { get; set; }
+        public int source_number { get; set; }
         public string client_uuid { get; set; }
         public string fulfillment_center_uuid { get; set; }
         public string mode_of_transport { get; set; }

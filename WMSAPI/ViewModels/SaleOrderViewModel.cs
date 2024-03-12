@@ -4,7 +4,7 @@ namespace WMSAPI.ViewModels
 {
     public class SaleOrderViewModel
     {
-        public Data data { get; set; }
+        public Data Data { get; set; }
     }
     // Root myDeserializedClass = JsonConvert.DeserializeObject<Root>(myJsonResponse);
     public class Consignee
@@ -20,21 +20,27 @@ namespace WMSAPI.ViewModels
 
     public class Data
     {
-        public List<Order> orders { get; set; }
+        public List<Order> Orders { get; set; }
     }
 
     public class InvoiceView
     {
         public string invoice_number { get; set; }
         public string payment_mode { get; set; }
-        public int total_price { get; set; }
-        public int cod_amount { get; set; }
+        public decimal total_price { get; set; }
+        public decimal cod_amount { get; set; }
         public string invoice_url { get; set; }
+    }
+    public class InvoiceViewOrderLines
+    {
+        public string payment_mode { get; set; }
+        public decimal total_price { get; set; }
+        public decimal cod_amount { get; set; }
     }
 
     public class Order
     {
-        public string order_number { get; set; }
+        public int order_number { get; set; }
         public string order_date { get; set; }
         public string order_type { get; set; }
         public string channel { get; set; }
@@ -49,7 +55,7 @@ namespace WMSAPI.ViewModels
         public string orderline_bucket { get; set; }
         public int quantity { get; set; }
         public string client_id { get; set; }
-        public InvoiceView invoice { get; set; }
+        public InvoiceViewOrderLines Invoice { get; set; }
     }
 
     public class DataRoot

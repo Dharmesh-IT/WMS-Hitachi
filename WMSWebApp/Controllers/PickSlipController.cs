@@ -18,6 +18,11 @@ using Domain.Model;
 using Domain.Model.Masters;
 using Domain.Model.StockManagement;
 using OfficeOpenXml.FormulaParsing.Excel.Functions.Math;
+using Application.Services;
+using WMSWebApp.ViewModels.Invoice;
+using DocumentFormat.OpenXml.Spreadsheet;
+using Domain.Model.Invoice;
+using Application.Services.Invoice;
 
 namespace WMSWebApp.Controllers
 {
@@ -26,7 +31,8 @@ namespace WMSWebApp.Controllers
     {
 
         #region Fields
-        private readonly ITempPickSlipDetailsService _tempPickSlipDetailsService;
+        // private readonly ITempPickSlipDetailsService _tempPickSlipDetailsService;
+        private readonly IIntrasitHelper _intrasitHelper;
         private readonly IPickSlipService _pickSlipService;
         private readonly IWarehouseService _warehouseService;
         private readonly IGoodReceivedNoteMasterService _goodReceivedNoteMasterService;
@@ -36,14 +42,20 @@ namespace WMSWebApp.Controllers
         private readonly ISalePo _salePoService;
         private readonly IServiceOrderPo _serviceOrderPoService;
         private readonly IStockTransferPo _stockTransferPoService;
+        private readonly ISubItemHelper _subItemService;
+        private readonly IInvoiceService _invoiceService;
 
 
         #endregion
 
         #region Ctor
-        public PickSlipController(ITempPickSlipDetailsService tempPickSlipDetailsService, IPickSlipService pickSlipService, IWarehouseService warehouseService, IGoodReceivedNoteMasterService goodReceivedNoteMasterService, IWorkContext workContext, IPurchaseOrder purchaseOrder, ISalePo salePoService, IServiceOrderPo serviceOrderPoService, IStockTransferPo stockTransferPoService, IItemStockService itemStockService)
+        public PickSlipController(IIntrasitHelper  intrasitHelper, IPickSlipService pickSlipService, 
+            IWarehouseService warehouseService, IGoodReceivedNoteMasterService goodReceivedNoteMasterService, 
+            IWorkContext workContext, IPurchaseOrder purchaseOrder, ISalePo salePoService, IServiceOrderPo serviceOrderPoService,
+            IStockTransferPo stockTransferPoService, IItemStockService itemStockService, ISubItemHelper subItemService,
+            IInvoiceService invoiceService)
         {
-            _tempPickSlipDetailsService = tempPickSlipDetailsService;
+            _intrasitHelper = intrasitHelper;
             _pickSlipService = pickSlipService;
             _warehouseService = warehouseService;
             _goodReceivedNoteMasterService = goodReceivedNoteMasterService;
@@ -53,6 +65,8 @@ namespace WMSWebApp.Controllers
             _serviceOrderPoService = serviceOrderPoService;
             _stockTransferPoService = stockTransferPoService;
             _itemStockService = itemStockService;
+            _subItemService = subItemService;
+            _invoiceService = invoiceService;
         }
         #endregion
 
@@ -140,18 +154,23 @@ namespace WMSWebApp.Controllers
                 foreach (var item in items)
                 {
                     GrnItemListModel m = new GrnItemListModel();
-
-                    m.Amount = 0;
-                    m.SubItemName = item.StockTransferPOSubItem;
-                    m.POId = id;
-                    m.Id = item.Id;
-                    m.ItemCode = item.StockTransferPOItem;
-                    m.MaterialDescription = "";
-                    m.Qty = item.StockTransferPOQty;
-                    m.SubItemCode = item.SubItemCode;
-                    m.Location = "";
-                    m.Unit = "";
-                    model.Add(m);
+                    var itemDetails = _intrasitHelper.GetItemSubItemDetails(item.sku).FirstOrDefault();
+                    if(itemDetails != null)
+                    {
+                        m.Amount = 0;
+                        m.SubItemName = itemDetails.SubItemName;
+                        m.POId = id;
+                        m.Id = item.Id;
+                        m.ItemCode = itemDetails.ItemCode;
+                        m.MaterialDescription = itemDetails.MaterialDescription;
+                        m.Qty = item.quantity;
+                        m.SubItemCode = itemDetails.SubItemCode;
+                        m.Location = "";
+                        m.Unit = "";
+                        m.line_itemId = item.line_itemid;
+                        model.Add(m);
+                    }
+                  
                 }
             }
             else if (docType == "Sale PO")
@@ -159,31 +178,32 @@ namespace WMSWebApp.Controllers
                 var items = _salePoService.GetSalePos(id);
                 foreach (var item in items)
                 {
-                    GrnItemListModel m = new GrnItemListModel();
-
-                    m.Amount = Convert.ToInt32(item.SalePOAmt);
-                    m.SubItemName = item.SalePOSubItem;
-
-                    m.POId = id;
-                    m.Id = item.Id;
-                    m.ItemCode = item.SalePOSubItem;
-                    var location = _itemStockService.ItemsByCode(item.SubItemCode, branch.BranchWiseWarehouses.FirstOrDefault().WarehouseId);
-                    if (location != null)
+                    var itemDetails = _intrasitHelper.GetItemSubItemDetails(item.product_sku).FirstOrDefault();
+                    if(itemDetails != null)
                     {
-                        var warehouse = _warehouseService.GetWarehouseZoneAreaById(location.FirstOrDefault().AreaId);
-                        m.Location = warehouse.AreaName;
-                        m.AreaId = warehouse.Id;
-                        m.InventoryId = location.FirstOrDefault().Id;
+                        GrnItemListModel m = new GrnItemListModel();
+                        m.Amount = Convert.ToInt32(item.SalePOAmt);
+                        m.SubItemName = itemDetails.SubItemName;
+                        m.POId = id;
+                        m.Id = item.Id;
+                        m.ItemCode = itemDetails.ItemCode;
+                        var location = _itemStockService.ItemsByCode(itemDetails.SubItemCode, branch.BranchWiseWarehouses.FirstOrDefault().WarehouseId);
+                        if (location != null && location.Count > 0)
+                        {
+                            var warehouse = _warehouseService.GetWarehouseZoneAreaById(location.FirstOrDefault().AreaId);
+                            m.Location = warehouse.AreaName;
+                            m.AreaId = warehouse.Id;
+                            m.InventoryId = location.FirstOrDefault().Id;
+                        }
+                        m.MaterialDescription = itemDetails.MaterialDescription;
+                        m.Qty = item.quantity;
+                        m.SubItemCode = itemDetails.SubItemCode;
+                        m.Unit = "";
+                        m.invoiceNumber = item.invoiceNumber;
+                        m.Address1 = "Name : " + item.consignee_name + ".\n" + "Address : " + item.consignee_address_line1 + ".\n" + item.consignee_city + " - " + item.consignee_pin_code +
+                            "," + item.consignee_state + "," + item.consignee_country;
+                        model.Add(m);
                     }
-                    m.MaterialDescription = "";
-                    m.Qty = item.SalePOQty;
-                    m.SubItemCode = item.SubItemCode;
-                    m.Unit = "";
-
-
-
-
-                    model.Add(m);
                 }
             }
             else
@@ -233,18 +253,37 @@ namespace WMSWebApp.Controllers
             return Json(locations);
         }
 
+
+        [HttpGet]
+        public virtual IActionResult GetLocationForGrid(string SubItemCode)
+        {
+            var branch = _workContext.GetCurrentBranch().Result;
+            var location = _intrasitHelper.GetItemDetailsForPickSlip(SubItemCode,branch.BranchWiseWarehouses.FirstOrDefault().WarehouseId);
+            location = location.DistinctBy(x => new { x.AreaId, x.InventoryId }).ToList() ;
+            var gridData = new DataSourceResult()
+            {
+                Data = location,
+                Total = location.Count,
+            };
+
+            return Json(gridData);
+        }
+
         [HttpPost]
         public virtual IActionResult Save([FromBody] List<GrnItemListModel> model)
         {
+            var pickSlipId = 0;
+            
             if (model.Count > 0)
             {
                 var branch = _workContext.GetCurrentBranch().Result;
                 PickSlipMaster master = new PickSlipMaster();
-                master.PickSlipName = "";
+                master.PickSlipName = model.FirstOrDefault().POId + "_" + "PickSlip";
                 master.CreateOn = DateTime.Now;
                 master.BranchCode = branch.BranchCode;
-                master.POID = model.FirstOrDefault().Id;
+                master.POID = Convert.ToInt32(model.FirstOrDefault().POId);
                 master.DockType = model.FirstOrDefault().DockType;
+                InvoiceMaster invoiceMaster = new InvoiceMaster();
                 foreach (var item in model)
                 {
                     PickSlipDetails details = new PickSlipDetails();
@@ -258,72 +297,75 @@ namespace WMSWebApp.Controllers
                     details.SubItemCode = item.SubItemCode;
                     details.Unit = item.Unit;
                     master.PickSlipDetails.Add(details);
+              
+                    var pos = _salePoService.GetById(item.Id);
+                    pos.IsProcessed = true;
+                    _salePoService.Update(pos);
 
-                }
-                _pickSlipService.Insert(master);
-                foreach (var item in model)
-                {
-                    switch (item.DockType)
+                    InvoiceDetails m = new InvoiceDetails();
+
+                    m.Amt = item.Amount;
+                    m.SubItemName = item.SubItemName;
+                    m.AreaId = item.AreaId;
+                    //m.Id = item.Id;
+                    m.SubItemCode = item.SubItemCode;
+                    m.MaterialDescription = item.MaterialDescription;
+                    var area = _warehouseService.GetWarehouseZoneAreaById(item.AreaId);
+                    if (area != null)
                     {
-                        case "ServiceOrder PO":
-                            {
-                                var pos = _serviceOrderPoService.GetById(item.Id);
-                                pos.IsProcessed = true;
-                                _serviceOrderPoService.Update(pos);
-                                var allItem = _serviceOrderPoService.GetServicePos(pos.PONumber);
-                                var processItems = allItem.Where(x => x.IsProcessed == true).ToList();
-                                if (allItem.Count == processItems.Count)
-                                {
-                                    var purchaseOrder = _purchaseOrder.GetAllPurchaseByPoNumber(allItem.FirstOrDefault().PONumber);
-                                    var poMaster = _purchaseOrder.GetById(purchaseOrder.FirstOrDefault().Id);
-                                    poMaster.ProcessStatus = true;
-                                    _purchaseOrder.Update(poMaster);
-                                }
-                                break;
-                            }
-                        case "Sale PO":
-                            {
-                                var pos = _salePoService.GetById(item.Id);
-                                pos.IsProcessed = true;
-                                _salePoService.Update(pos);
-                                var allItem = _salePoService.GetAllItemSalePos(pos.PONumber);
-                                var processItems = allItem.Where(x => x.IsProcessed == true).ToList();
-                                if (allItem.Count == processItems.Count)
-                                {
-
-                                    var purchaseOrder = _purchaseOrder.GetAllPurchaseByPoNumber(allItem.FirstOrDefault().PONumber);
-                                    var poMaster = _purchaseOrder.GetById(purchaseOrder.FirstOrDefault().Id);
-                                    poMaster.ProcessStatus = true;
-                                    _purchaseOrder.Update(poMaster);
-                                }
-                                break;
-                            }
-                        case "StockTransfer PO":
-                            {
-                                var pos = _stockTransferPoService.GetById(item.Id);
-                                pos.IsProcessed = true;
-                                _stockTransferPoService.Update(pos);
-                                var allItem = _stockTransferPoService.GetStockTransferPos(pos.PONumber);
-                                var processItems = allItem.Where(x => x.IsProcessed == true).ToList();
-                                if (allItem.Count == processItems.Count)
-                                {
-                                    var purchaseOrder = _purchaseOrder.GetAllPurchaseByPoNumber(allItem.FirstOrDefault().PONumber);
-                                    var poMaster = _purchaseOrder.GetById(purchaseOrder.FirstOrDefault().Id);
-                                    poMaster.ProcessStatus = true;
-                                    _purchaseOrder.Update(poMaster);
-                                }
-                                break;
-                            }
+                        m.AreaCode = area.AreaCode;
+                        m.AreaName = area.AreaName;
+                        var zone = _warehouseService.GetZoneById(area.ZoneId);
+                        m.ZoneCode = zone.ZoneCode;
+                        m.ZoneName = zone.ZoneName;
+                        var warehouse = _warehouseService.GetById(zone.WarehouseId);
+                        m.Warehouse = warehouse.WarehouseName;
+                        m.WarehouseCode = warehouse.WarehouseCode;
                     }
 
+                    m.Qty = item.Qty;
+                    m.InvoiceMaster = invoiceMaster;
+                    invoiceMaster.InvoiceDetails.Add(m);
 
                 }
+                pickSlipId = _pickSlipService.InsertAndReturnId(master);
 
+                invoiceMaster.PoNumber = model.FirstOrDefault().POId;
+                invoiceMaster.PoCategory = model.FirstOrDefault().DockType;
+                invoiceMaster.CreateOn = DateTime.Now;
+                invoiceMaster.BilledTo = "";
+                invoiceMaster.Address1 = model.FirstOrDefault().Address1;
+                invoiceMaster.PickSlipId = pickSlipId;
+                invoiceMaster.InvoiceNumber = model.FirstOrDefault().invoiceNumber;
+                invoiceMaster.BranchCode = branch.BranchCode;
+                invoiceMaster.DispatchDone = false;
+
+                var allItem = _salePoService.GetAllItemSalePos(model.FirstOrDefault().POId.ToString());
+                var processItems = allItem.Where(x => x.IsProcessed == true).ToList();
+                if (allItem.Count > 0 && allItem.Count == processItems.Count)
+                {
+                    var purchaseOrder = _purchaseOrder.GetAllPurchaseByPoNumber(allItem.FirstOrDefault().order_number.ToString());
+                    foreach (var poItem in purchaseOrder)
+                    {
+                        var poMaster = _purchaseOrder.GetById(poItem.Id);
+                                               List<InvoiceDetails> invoiceDetails = new List<InvoiceDetails>();
+
+                        _invoiceService.InsertMaster(invoiceMaster);
+                        var pickslipDetails = _pickSlipService.GetPickSlipMasters(branch.BranchCode, master.PickSlipName).ToList()[0];
+                        pickslipDetails.IsProcessed = true;
+                        _pickSlipService.Update(pickslipDetails);
+
+                        poMaster.ProcessStatus = true;
+                        poMaster.ProcessStatusUpdateDateTime = DateTime.Now;
+                        _purchaseOrder.Update(poMaster);
+                    }
+                }
                 // Update Inventory
                 foreach (var item in model)
                 {
                     AddUpdateStock(item.InventoryId, item.Qty);
                 }
+               
                 return Json(true);
             }
             else
@@ -349,7 +391,7 @@ namespace WMSWebApp.Controllers
             {
                 Data = result.Select(x =>
                 {
-                    PickSlipListModel m = new PickSlipListModel();
+                    WMSWebApp.ViewModels.Pickslip.PickSlipListModel m = new WMSWebApp.ViewModels.Pickslip.PickSlipListModel();
                     m.PickSlipName = x.PickSlipName;
                     m.BranchCode = x.BranchCode;
                     m.Branch = x.BranchCode;

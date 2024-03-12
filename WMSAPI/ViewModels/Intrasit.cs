@@ -18,7 +18,7 @@ namespace WMSAPI.ViewModels
         public string SubItemName { get; set; }
         [Display(Name = "Material Description")]
         public string MaterialDescription { get; set; }
-        public decimal Qty { get; set; }
+        public int Qty { get; set; }
         public string Unit { get; set; }
         public decimal Amt { get; set; }
         public DateTime ETA { get; set; }

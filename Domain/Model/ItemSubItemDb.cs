@@ -18,4 +18,18 @@ namespace Domain.Model
         public string ItemName { get; set; }
       
     }
+
+    public class InventoryStockItemDetails : BaseEntity
+    {
+        public int IntransitId { get; set; }
+        public DateTime ReceivedDate { get; set; }
+        public string Fifo { get; set; }
+        public string Serial_Number { get; set; }
+        public int AreaId { get; set; }
+        public int Qty { get; set; }
+        public string Location { get; set; }
+        public int InventoryId { get; set; } = 0;
+
+
+    }
 }

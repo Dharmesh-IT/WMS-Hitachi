@@ -19,7 +19,7 @@ namespace WMSWebApp.ViewModels
         public string SubItemName { get; set; }
         [Display(Name = "Material Description")]
         public string MaterialDescription { get; set; }
-        public decimal Qty { get; set; }
+        public int Qty { get; set; }
         public string Unit { get; set; }
         public decimal Amt { get; set; }
         public DateTime ETA { get; set; }
@@ -28,10 +28,12 @@ namespace WMSWebApp.ViewModels
         public bool AllowGRN { get; set; }
 
         public string subItemCodeVal { get; set; }
-        public string Recv_Date { get; set; }
+        public DateTime Recv_Date { get; set; }
         public string Way_Bill_Number { get; set; }
         public string Line_Item_id { get; set; }
-        public string Source_Number { get; set; }
+        public int Source_Number { get; set; }
+
+        public string SerialNumbers { get; set; }
         public string Bucket { get; set; }
 
     }

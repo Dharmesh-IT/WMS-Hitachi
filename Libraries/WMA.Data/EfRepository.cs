@@ -127,6 +127,39 @@ namespace WMS.Data
                 //ensure that the detailed error text is saved in the Log
                 throw new Exception(GetFullErrorTextAndRollbackEntityChanges(exception), exception);
             }
+            catch (Exception ex)
+            {
+                string innerEx = ex.InnerException != null ? ex.InnerException.ToString() : ex.Message;
+                Console.WriteLine(innerEx);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Insert entity
+        /// </summary>
+        /// <param name="entity">Entity</param>
+        public virtual int InsertAndReturnId(TEntity entity)
+        {
+            if (entity == null)
+                throw new ArgumentNullException(nameof(entity));
+
+            try
+            {
+                Entities.Add(entity);
+                return _context.SaveChanges();
+            }
+            catch (DbUpdateException exception)
+            {
+                //ensure that the detailed error text is saved in the Log
+                throw new Exception(GetFullErrorTextAndRollbackEntityChanges(exception), exception);
+            }
+            catch (Exception ex)
+            {
+                string innerEx = ex.InnerException != null ? ex.InnerException.ToString() : ex.Message;
+                Console.WriteLine(innerEx);
+                throw;
+            }
         }
 
         /// <summary>

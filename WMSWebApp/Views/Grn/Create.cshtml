@@ -67,13 +67,13 @@
 
                                         <label class="control-label">Document type</label>
                                         <select class="form-control" id="doctype">
-                                            <option value="PO">PO NO.</option>
-                                            @*<option value="Invoice">Invoice No.</option>*@
+                                           @*  <option value="PO">PO NO.</option> *@
+                                            <option value="Invoice">Invoice No.</option>
                                         </select>
 
                                     </div>
                                     <div class="form-group col-md-2" id="ponumber-area">
-                                        <label>PO Number</label>
+                                        <label>Invoice Number</label>
                                         <select class="form-control select2" id="ponumber"></select>
                                     </div>
                                     
@@ -97,12 +97,12 @@
                                                     </select>
                                                 </div>*@
                                                 <div class="form-group">
-                                                    <label>GRN Number From SAP</label>
-                                                <input id="grnnumbersap" class="form-control" placeholder="GRN Number From SAP" />
+                                                    <label>Line Item Id</label>
+                                                <input id="LineItemId" class="form-control" placeholder="Line Item Id" />
                                                 </div>
                                                 <div class="form-group">
-                                                    <label>IRN</label>
-                                                    <input id="irn" class="form-control" placeholder="IRN" />
+                                                    <label>Source Number</label>
+                                                <input id="source_number" class="form-control" placeholder="Source Number" />
                                                 </div>
                                                 <div class="form-group">
                                                     <label>Supplying Plant</label>
@@ -120,8 +120,8 @@
                                     </div>
                                 </div>
 
-                                <br />
-                                <div class="row">
+                                <br />   
+                                 <div class="row">
                                     <div class="col-md-12">
                                         <nav>
                                             <div class="nav nav-tabs" id="nav-tab" role="tablist">
@@ -242,14 +242,16 @@
                                                 <div class="row">
                                                     <div class="col-md-5">
                                                         <label>Serial Number</label>
-                                                        <input id="vendor" class="form-control" placeholder="Serial Number" />
+                                                        @* <input id="vendor" class="form-control" placeholder="Serial Number" /> *@
+                                                    <div id="serialNumberGrid" class="col-md-12">
+                                                    </div>
                                                     </div>
                                                 </div>
                                             </div>
                                             <br />
                                         </div>
                                     </div>
-                                </div>
+                                </div> 
                             </div>
                             <div class="card-footer">
                                 <button class="btn btn-primary" id="finalsave" type="button">Final Save</button>

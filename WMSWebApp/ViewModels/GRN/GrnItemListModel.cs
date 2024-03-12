@@ -1,4 +1,6 @@
-﻿namespace WMSWebApp.ViewModels.GRN
+﻿using System;
+
+namespace WMSWebApp.ViewModels.GRN
 {
     public class GrnItemListModel
     {
@@ -15,7 +17,12 @@
         public int AreaId { get; set; }
         public string Location { get; set; }
         public int InventoryId { get; set; }
-
+        public string Address1 { get; set; }
         public string DockType { get; set; }
+        public string mode_of_transport { get; set; }
+        public string agn_type { get; set; }
+        public string line_itemId { get; set; }
+        public string invoiceNumber { get; set; }
+        public DateTime expected_arrival_date { get; set; }
     }
 }

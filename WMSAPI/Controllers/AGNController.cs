@@ -1,19 +1,20 @@
 ﻿using Application.GenericServices;
 using Application.Services.Master;
 using Application.Services.PO;
+using Application.Services.User;
 using Domain.Model.PO;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Security.Claims;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 using WMS.Data;
 using WMSAPI.Filters;
@@ -33,14 +34,18 @@ namespace WMSAPI.Controllers
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IUserProfileService _userProfileService;
+        private readonly IPurchaseOrder _purchaseOrder;
+        private readonly IUserService _userservice;
         public AGNController(IStockTransferPo stockTransferPo, IConfiguration iconfig, SignInManager<ApplicationUser> signInManager,
-            UserManager<ApplicationUser> userManager, IUserProfileService userProfileService)
+            UserManager<ApplicationUser> userManager, IUserProfileService userProfileService, IPurchaseOrder purchaseOrder, IUserService userService)
         {
             _stockTransferPo = stockTransferPo;
             _configuration = iconfig;
             _signInManager = signInManager;
             _userManager = userManager;
             _userProfileService = userProfileService;
+            _purchaseOrder = purchaseOrder;
+            _userservice = userService;
         }
         [NonAction]
         public IActionResult Index()
@@ -51,48 +56,88 @@ namespace WMSAPI.Controllers
 
         [HttpPost]
         [TypeFilter(typeof(CustomAuthorization))]
-        public IActionResult Post(string agncreationdata)
+        public async Task<IActionResult> Post([FromBody] AGNRequestData request)
         {
-            string authKey = _configuration.GetValue<string>("Credential:authKey");
-            string authValue = _configuration.GetValue<string>("Credential:authValue");
-            dynamic response;
+            
+            string authKey = "4e57534b52403132";
+            string authValue = "4e57534b52403132";
+            dynamic response = null;
             try
             {
-                if (agncreationdata == null)
+                _userservice.InsertHitachiData(2, request.agncreationdata);
+                if (request.agncreationdata == null)
                 {
                     response = new
                     {
                         status = "FAILURE",
                         request_id = "",
-                        message = "Operation Unsuccessful. Please Check status of request id after 20 minutes.",
-                        status_code = HttpStatusCode.InternalServerError
+                        message = "Operation Unsuccessful. AGN created data is null",
+                        status_code = HttpStatusCode.OK
                     };
                 }
                 else
                 {
-                    var data = GenericMethods.DecryptClassObject(agncreationdata, authKey, authValue);
-                    var agnDetails = JsonSerializer.Deserialize<AGNViewModel>(data);
+                    var data = GenericMethods.DecryptClassObject(request.agncreationdata, authKey, authValue);
+                    var agnDetails = JsonConvert.DeserializeObject<AGNViewModel>(data);
                     var requestGuid = Guid.NewGuid();
-                    foreach (var item in agnDetails.products)
+                    if(agnDetails != null)
                     {
-                        var stockTransferPo = new StockTransferPoDb();
-                        stockTransferPo.source_number = agnDetails.source_number;
-                        stockTransferPo.client_uuid = agnDetails.client_uuid;
-                        stockTransferPo.fulfillment_center_uuid = agnDetails.fulfillment_center_uuid;
-                        stockTransferPo.mode_of_transport = agnDetails.mode_of_transport;
-                        stockTransferPo.expected_arrival_date = agnDetails.expected_arrival_date;
-                        stockTransferPo.agn_type = agnDetails.agn_type;
-                        stockTransferPo.quantity = item.quantity;
-                        stockTransferPo.sku = item.sku;
-                        stockTransferPo.line_itemid = item.extras.line_itemid;
-                        stockTransferPo.request_id = requestGuid.ToString();
+                        if (agnDetails.products != null && agnDetails.products.Count > 0)
+                        {
+                            foreach (var item in agnDetails.products)
+                            {
+                                var stockTransferPo = new StockTransferPoDb();
+                                stockTransferPo.source_number = agnDetails.source_number;
+                                stockTransferPo.client_uuid = agnDetails.client_uuid;
+                                stockTransferPo.fulfillment_center_uuid = agnDetails.fulfillment_center_uuid;
+                                stockTransferPo.mode_of_transport = agnDetails.mode_of_transport;
+                                stockTransferPo.expected_arrival_date = agnDetails.expected_arrival_date;
+                                stockTransferPo.agn_type = agnDetails.agn_type;
+                                stockTransferPo.quantity = item.quantity;
+                                stockTransferPo.sku = item.sku;
+                                stockTransferPo.line_itemid = item.extras.line_itemid;
+                                stockTransferPo.request_id = requestGuid.ToString();
 
-                        _stockTransferPo.Insert(stockTransferPo);
+                                _stockTransferPo.Insert(stockTransferPo);
+
+                            }
+                            _purchaseOrder.Insert(new PurchaseOrderDb
+                            {
+                                POCategory = "StockTransfer PO",
+                                PODate = agnDetails.expected_arrival_date,
+                                PONumber = agnDetails.source_number.ToString(),
+                                BranchCode = agnDetails.fulfillment_center_uuid,
+                                ProcessStatus = false
+                            });
+                            response = new
+                            {
+                                status = "SUCCESS",
+                                request_id = requestGuid.ToString(),
+                                message = "Operation Successful. Please Check status of request id after 20 minutes.",
+                                status_code = HttpStatusCode.OK
+                            };
+                        }
+                        else
+                        {
+                            response = new
+                            {
+                                status = "Failure",
+                                request_id = "",
+                                message = "Operation Not Successful. Please Check AGN Details. AGN products details is null.",
+                                status_code = HttpStatusCode.OK
+                            };
+                        }
                     }
-                    response =  new { status = "SUCCESS", request_id = requestGuid.ToString(),
-                        message= "Operation Successful. Please Check status of request id after 20 minutes.",
-                        status_code= HttpStatusCode.OK
-                    };
+                    else
+                    {
+                        response = new
+                        {
+                            status = "Failure",
+                            request_id = "",
+                            message = "Operation Not Successful. Please Check AGN Details. AGN Details is null.",
+                            status_code = HttpStatusCode.OK
+                        };
+                    }
                 }
 
             }

@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using WMS.Core;
 namespace Domain.Model
 {
@@ -20,17 +15,30 @@ namespace Domain.Model
         public string Material_Description { get; set; }
         public string Way_Bill_Number { get; set; }
         public string Line_Item_id { get; set; }
-        public string Source_Number { get; set; }
+        public int Source_Number { get; set; }
         public string Bucket { get; set; }
-        public decimal Qty { get; set; }
+        public int Qty { get; set; }
         public string Unit { get; set; }
         public decimal Amt { get; set; }
         public DateTime ETA { get; set; }
         public bool IsDeleted { get; set; }
         public bool IsGrn { get; set; }
-        public string Recv_Date { get; set; }
+        public DateTime Recv_Date { get; set; }
 
-        
+        public bool IsProcessed { get; set; } = false;
+        public int PendingToProcessQuantity { get; set; }
+        public string request_id { get; set; }
+        public string client_uuid { get; set; }
+        public string mode_of_transport { get; set; }
+        public string agn_type { get; set; }
+        public string fulfillment_center_uuid { get; set; }
+        public DateTime CreatedDateTimeStamp { get; set; } = DateTime.Now;
+    }
 
+    public class ItemSerialDetailsDb :BaseEntity
+    {
+        public new long Id { get; set; }
+        public string Serial_Number { get; set; }
+        public int IdInTrasit { get; set; }
     }
 }

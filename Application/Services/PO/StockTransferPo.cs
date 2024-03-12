@@ -39,7 +39,7 @@ namespace Application.Services.PO
                         select x;
             if (poNumber != "0")
             {
-                query = query.Where(x => x.PONumber == poNumber);
+                query = query.Where(x => x.source_number.ToString() == poNumber);
             }
             query = query.OrderByDescending(x => x.Id);
 
@@ -47,12 +47,12 @@ namespace Application.Services.PO
             return result;
         }
 
-        public virtual IPagedList<StockTransferPoDb> GetDetails(string PoCat, int pageIndex = 0, int pageSize = int.MaxValue)
+        public virtual IPagedList<StockTransferPoDb> GetDetails(string PoCat, string branchCode, int pageIndex = 0, int pageSize = int.MaxValue)
         {
             var query = from x in _poRepository.Table
                         join y in _stockTransfterPoRepository.Table
-                        on x.PONumber equals y.PONumber
-                        where x.POCategory == PoCat
+                        on x.PONumber equals y.source_number.ToString()
+                        where x.POCategory == PoCat && x.BranchCode == branchCode
                         select y;
             var result = new PagedList<StockTransferPoDb>(query, pageIndex, pageSize);
             return result;

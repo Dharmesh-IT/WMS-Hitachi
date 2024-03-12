@@ -10,7 +10,7 @@ namespace Application.Services.GRN
 {
     public interface IIntrasitService
     {
-        IPagedList<IntrasitDb> GetPendingPO(string branchCode, string pono, int pageIndex = 0, int pageSize = int.MaxValue);
+        (IPagedList<IntrasitDb> intrasitResult, IPagedList<ItemSerialDetailsDb> itemSerialDetailResult) GetPendingPO(string branchCode, string pono, int pageIndex = 0, int pageSize = int.MaxValue);
         IntrasitDb GetById(int id);
         void Update(IntrasitDb entitiy);
         IPagedList<IntrasitDb> GetDonePO(string branchCode, int pageIndex = 0, int pageSize = int.MaxValue);

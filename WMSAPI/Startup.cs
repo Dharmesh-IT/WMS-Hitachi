@@ -14,6 +14,7 @@ using Microsoft.OpenApi.Models;
 using Newtonsoft.Json.Serialization;
 using System;
 using System.Linq;
+using System.Text.Json.Serialization;
 using WMS.Data;
 using WMS.Web.Framework.Infrastructure.Extentsion;
 using WMSAPI.Models;
@@ -83,11 +84,19 @@ namespace WMSAPI
                 "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
                 options.User.RequireUniqueEmail = true;
             });
-            services.AddControllers().AddNewtonsoftJson(options =>
+            //services.AddControllers().AddNewtonsoftJson(options =>
+            //{
+            //    options.SerializerSettings.ContractResolver = new DefaultContractResolver();
+            //});
+            services.AddControllers().AddNewtonsoftJson();
+            services.AddControllersWithViews().AddJsonOptions(opt =>
             {
-                options.SerializerSettings.ContractResolver = new DefaultContractResolver();
+                opt.JsonSerializerOptions.PropertyNamingPolicy = null;
+                opt.JsonSerializerOptions.AllowTrailingCommas = true;
+                opt.JsonSerializerOptions.NumberHandling = JsonNumberHandling.AllowReadingFromString |
+                    JsonNumberHandling.WriteAsString;
+                opt.JsonSerializerOptions.IncludeFields = true;
             });
-            services.AddControllersWithViews().AddNewtonsoftJson();
             services.Configure<GzipCompressionProviderOptions>(options =>
             {
                 options.Level = System.IO.Compression.CompressionLevel.Optimal;

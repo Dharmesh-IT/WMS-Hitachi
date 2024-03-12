@@ -68,8 +68,129 @@ $(document).ready(function () {
 
     $('#ponumber').on('change', function (e) {
         $("#ponumber_details").val($("#ponumber").val());
-        var grid = $('#myGrid').data('kendoGrid');
-        grid.dataSource.page(1);
+        $("#invoiceNo").val($("#ponumber").val());
+        $("#myGrid").empty();
+        var initialLoad = true;
+        $("#myGrid").kendoGrid({
+
+
+            dataSource: {
+
+                transport: {
+                    read: {
+                        url: "/Grn/PODetails",
+                        type: "POST",
+                        dataType: "json",
+                        data: additionalData,
+                        complete: function (result) {
+                            //debugger;
+                            console.log("Remote built-in transport", result);
+                            if (result.status == 401) {
+                                /* document.location.href = "@Html.Raw(Url.Action("Index", "AccessDenied"))";*/
+                            }
+                        }
+
+                    }
+                },
+                schema: {
+                    data: "Data",
+                    total: "Total",
+                    errors: "Errors"
+                },
+                error: function (e) {
+                    //display_kendoui_grid_error(e);
+                    // Cancel the changes
+                    console.log(e)
+                    this.cancelChanges();
+                },
+                pageSize: 20,
+                sortable: true,
+                serverPaging: true,
+                serverSorting: true,
+                requestStart: function () {
+                    if (initialLoad) //<-- if it's the initial load, manually start the spinner
+                        kendo.ui.progress($("#booking-grid"), true);
+                },
+                requestEnd: function () {
+                    if (initialLoad)
+                        kendo.ui.progress($("#booking-grid"), false);
+                    initialLoad = false; //<-- make sure the spinner doesn't fire again (that would produce two spinners instead of one)
+
+                },
+
+            },
+            selectable: 'raw',
+            change: onChange,
+            height: 350,
+            pageable: {
+                refresh: true,
+                pageSizes: true
+            },
+
+            scrollable: true,
+            persistSelection: true,
+            columns: [
+                { selectable: true, width: "50px", field: "AllowGRN" },
+                {
+
+                    field: "Id",
+                    title: "Id",
+
+                    width: 50
+                },
+                {
+                    field: "SubItemCode",
+                    title: "SubItemCode",
+                    width: 100
+                },
+
+                {
+                    field: "SubItemName",
+                    title: "SubItemName",
+                    width: 120
+                },
+                {
+                    field: "Qty",
+                    title: "Qty",
+                    encoded: false,
+                    width: 120
+                },
+                {
+                    field: "Unit",
+                    title: "Unit",
+                    width: 100
+                },
+                {
+                    field: "MaterialDescription",
+                    title: "MaterialDescription",
+                    width: 300
+                },
+
+                {
+                    field: "Amt",
+                    title: "Amt",
+                    width: 100
+                },
+
+
+            ],
+
+        });
+        function onChange(arg) {
+            //var selected = $.map(this.select(), function (item) {
+            //    return $(item);
+            //});
+            var rows = arg.sender.select(),
+                items = [];
+
+            rows.each(function (arg) {
+                var grid = $('#myGrid').data('kendoGrid');
+                var dataItem = grid.dataItem(this);
+                items.push(dataItem);
+            });
+            fildetails(items);
+            console.log(items);
+        }
     });
     $("#doctype").on('change', function () {
         if ($(this).val() === "PO") {
@@ -80,112 +201,7 @@ $(document).ready(function () {
         }
     });
 
-    var initialLoad = true;
-    $("#myGrid").kendoGrid({
-
-
-        dataSource: {
-
-            transport: {
-                read: {
-                    url: "/Grn/PODetails",
-                    type: "POST",
-                    dataType: "json",
-                    data: additionalData,
-                    complete: function (result) {
-                        //debugger;
-                        console.log("Remote built-in transport", result);
-                        if (result.status == 401) {
-                            /* document.location.href = "@Html.Raw(Url.Action("Index", "AccessDenied"))";*/
-                        }
-                    }
-
-                }
-            },
-            schema: {
-                data: "Data",
-                total: "Total",
-                errors: "Errors"
-            },
-            error: function (e) {
-                //display_kendoui_grid_error(e);
-                // Cancel the changes
-                console.log(e)
-                this.cancelChanges();
-            },
-            pageSize: 20,
-            sortable: true,
-            serverPaging: true,
-            serverSorting: true,
-            requestStart: function () {
-                if (initialLoad) //<-- if it's the initial load, manually start the spinner
-                    kendo.ui.progress($("#booking-grid"), true);
-            },
-            requestEnd: function () {
-                if (initialLoad)
-                    kendo.ui.progress($("#booking-grid"), false);
-                initialLoad = false; //<-- make sure the spinner doesn't fire again (that would produce two spinners instead of one)
-
-            },
-
-        },
-        selectable: 'raw',
-        change: onChange,
-        height: 350,
-        pageable: {
-            refresh: true,
-            pageSizes: true
-        },
-
-        scrollable: true,
-        persistSelection: true,
-        columns: [
-            { selectable: true, width: "50px",field:"AllowGRN" },
-            {
-
-                field: "Id",
-                title: "Id",
-
-                width: 50
-            },
-            {
-                field: "SubItemCode",
-                title: "SubItemCode",
-                width: 100
-            },
-
-            {
-                field: "SubItemName",
-                title: "SubItemName",
-                width: 120
-            },
-            {
-                field: "Qty",
-                title: "Qty",
-                encoded: false,
-                width: 120
-            },
-            {
-                field: "Unit",
-                title: "Unit",
-                width: 100
-            },
-            {
-                field: "MaterialDescription",
-                title: "MaterialDescription",
-                width: 300
-            },
-
-            {
-                field: "Amt",
-                title: "Amt",
-                width: 100
-            },
-
-
-        ],
-
-    });
+  
 
     $("#addtoarea").click(function () {
         var grid = $("#myGrid").data("kendoGrid");
@@ -253,8 +269,8 @@ $(document).ready(function () {
                 location["acode"] = $("#acode").val();
                 location["Ponumber"] = $("#ponumber").val();
                 location["invoice"] = $("#invoiceNo").val();
-                location["GRNNumberOfSAP"] = $("#grnnumbersap").val();
-                location["IRN"] = $("#irn").val();
+                location["LineItemId"] = $("#LineItemId").val();
+                location["source_number"] = $("#source_number").val();
                 grndata.push(location);
                 toastr.success('Item ' + selectedItem["Id"] + ' successfully added on area code' + location["acode"] + ' in zone ' + location["zone"]);
             }
@@ -285,6 +301,8 @@ $(document).ready(function () {
                     "headers": {
                         "Content-Type": "application/json"
                     },
+                    dataType: "json",
+                    contentType: 'application/json  charset=utf-8',
                     "data": JSON.stringify(grndata),
                 };
 
@@ -304,21 +322,7 @@ $(document).ready(function () {
     });
 
 });
-function onChange(arg) {
-    //var selected = $.map(this.select(), function (item) {
-    //    return $(item);
-    //});
-    var rows = arg.sender.select(),
-        items = [];
 
-    rows.each(function (arg) {
-        var grid = $('#myGrid').data('kendoGrid');
-        var dataItem = grid.dataItem(this);
-        items.push(dataItem);
-    });
-    fildetails(items);
-    console.log(items);
-}
 
 function additionalData() {
     var data = {
@@ -333,9 +337,42 @@ function fildetails(items) {
     $("#Material").val(items[0]['MaterialDescription']);
     $("#MaterialCode").val(items[0]['SubItemCode']);
     $("#qtyu,#Qtysuk,#QtyD,#QtyO,#QtyI").val(items[0]['Qty']);
+    $("#LineItemId").val(items[0]['Line_Item_id']);
+    $("#source_number").val(items[0]['Source_Number']);
     $("#sendercompany").val(items[0]["SenderCompany"]);
     $("#sender").val(items[0]["Branch"]);
     itemLocation(items[0]['SubItemCode']);
+  
+    var myDataArray = [];
+    $.each(items[0]['SerialNumbers'].split(','), function (index, serialNumber) {
+        console.log("serialNumber " + serialNumber);
+        let tempObj = { Id : items[0]['Id'], SerialNumber : serialNumber };
+        myDataArray.push(tempObj);
+    });
+
+
+    $("#serialNumberGrid").kendoGrid({
+        width: "700px",
+        height: "400px",
+    // The columns configuration is an array of objects.
+    columns: [
+            // The field matches the ID property in the data array.
+            { field: "Id", title: "Id", width: "70px" },
+        { field: "SerialNumber", title: "Serial Number", width: "200px"}
+        ],
+        dataSource: {
+            data: myDataArray,
+            schema: {
+                model: {
+                    Id: "Id",
+                    fields: {
+                        Id: { type: "number", editable: false },
+                        SerialNumber: { type: "string", editable: false }
+                    }
+                }
+            }
+        }
+    });
 }
 
 function warehouse() {
@@ -346,7 +383,7 @@ function warehouse() {
         success: function (data) {
             var s = '';
             for (var i = 0; i < data.length; i++) {
-                s += '<option value="' + data[i].Id + '" data-code=' + data[i].WarehouseCode + '>' + data[i].WarehouseName + '</option>';
+                s += '<option value="' + data[i].Id + '" data-code="' + data[i].WarehouseCode + '">' + data[i].WarehouseName + '</option>';
             }
             $("#WarehouseId").html(s);
         }
@@ -364,11 +401,14 @@ function zones(warehouseId) {
         data: "{}",
         success: function (data) {
             var s = '';
-            for (var i = 0; i < data.length; i++) {
-                s += '<option value="' + data[i].Id + '" data-code=' + data[i].ZoneCode + '>' + data[i].ZoneName + '</option>';
+            if (data.length > 0) {
+                for (var i = 0; i < data.length; i++) {
+                    s += '<option value="' + data[i].Id + '" data-code=' + data[i].ZoneCode + '>' + data[i].ZoneName + '</option>';
+                }
+                $("#zone").html(s);
+                $("#zone").trigger("change");
             }
-            $("#zone").html(s);
-            $("#zone").trigger("change");
+           
         }
     });
 
@@ -382,11 +422,14 @@ function area(warehouseId, zoneid) {
         data: "{}",
         success: function (data) {
             var s = '';
-            for (var i = 0; i < data.length; i++) {
-                s += '<option value="' + data[i].Id + '" data-code=' + data[i].AreaCode + '  data-size=' + data[i].Size + '>' + data[i].AreaName + '</option>';
+            if (data.length > 0) {
+                for (var i = 0; i < data.length; i++) {
+                    s += '<option value="' + data[i].Id + '" data-code=' + data[i].AreaCode + '  data-size=' + data[i].Size + '>' + data[i].AreaName + '</option>';
+                }
+                $("#Warea").html(s);
+                $("#Warea").trigger("change");
             }
-            $("#Warea").html(s);
-            $("#Warea").trigger("change");
+           
         }
     });
 
@@ -404,14 +447,14 @@ function validation() {
             alert("Please enter invoice no.");
             return false;
         }
-        if ($("#grnnumbersap").val() === undefined || $("#grnnumbersap").val() === "") {
-            alert("Please enter GRN no. from SAP");
-            return false;
-        }
-        if ($("#irn").val() === undefined || $("#irn").val() === "") {
-            alert("Please enter IRN");
-            return false;
-        }
+        //if ($("#grnnumbersap").val() === undefined || $("#grnnumbersap").val() === "") {
+        //    alert("Please enter GRN no. from SAP");
+        //    return false;
+        //}
+        //if ($("#irn").val() === undefined || $("#irn").val() === "") {
+        //    alert("Please enter IRN");
+        //    return false;
+        //}
     }
     else {
 
@@ -439,47 +482,45 @@ function itemLocation(subitemcode) {
         data: "{}",
         success: function (data) {
             console.log(data);
-           
-            $("#WarehouseId").val(data.WareHouseId).trigger("change")
-            var warehouseId = data.WareHouseId;
-            var zoneid = data.WareHouseAreaId;
-            var locationId = data.LocationId
-            $.ajax({
-                type: "GET",
-                url: "/Grn/WarehouseZone?warehouseid=" + warehouseId,
-                data: "{}",
-                success: function (data1) {
-                    var s = '';
-                    for (var i = 0; i < data1.length; i++) {
-                        s += '<option value="' + data1[i].Id + '" data-code=' + data1[i].ZoneCode + '>' + data1[i].ZoneName + '</option>';
-                    }
-                    
-                    $("#zone").html(s);
-                    console.log("zone loalded");
-                    $("#zone").val(zoneid);
-                    /*$("#zone").trigger("change");*/
-                    $.ajax({
-                        type: "GET",
-                        url: "/Grn/WarehouseArea?warehouseid=" + warehouseId + '&zoneid=' + zoneid,
-                        data: "{}",
-                        success: function (data2) {
-                            var s = '';
-                            for (var i = 0; i < data2.length; i++) {
-                                s += '<option value="' + data2[i].Id + '" data-code=' + data2[i].AreaCode + '  data-size=' + data2[i].Size + '>' + data2[i].AreaName + '</option>';
-                            }
-                            /*$("#Warea").empty();*/
-                            $("#Warea").html(s);
-                            
-                            $("#Warea").val(locationId);
-                            /*$("#Warea").trigger("change");*/
+
+            if (data.WareHouseId !== undefined && data.WareHouseId > 0) {
+                $("#WarehouseId").val(data.WareHouseId).trigger("change")
+                var warehouseId = data.WareHouseId;
+                var zoneid = data.WareHouseAreaId;
+                var locationId = data.LocationId
+                $.ajax({
+                    type: "GET",
+                    url: "/Grn/WarehouseZone?warehouseid=" + warehouseId,
+                    data: "{}",
+                    success: function (data1) {
+                        var s = '';
+                        for (var i = 0; i < data1.length; i++) {
+                            s += '<option value="' + data1[i].Id + '" data-code=' + data1[i].ZoneCode + '>' + data1[i].ZoneName + '</option>';
                         }
-                    });
-                }
-            });
 
+                        $("#zone").html(s);
+                        console.log("zone loalded");
+                        $("#zone").val(zoneid);
+                        /*$("#zone").trigger("change");*/
+                        $.ajax({
+                            type: "GET",
+                            url: "/Grn/WarehouseArea?warehouseid=" + warehouseId + '&zoneid=' + zoneid,
+                            data: "{}",
+                            success: function (data2) {
+                                var s = '';
+                                for (var i = 0; i < data2.length; i++) {
+                                    s += '<option value="' + data2[i].Id + '" data-code=' + data2[i].AreaCode + '  data-size=' + data2[i].Size + '>' + data2[i].AreaName + '</option>';
+                                }
+                                /*$("#Warea").empty();*/
+                                $("#Warea").html(s);
 
-            
-           
+                                $("#Warea").val(locationId);
+                                /*$("#Warea").trigger("change");*/
+                            }
+                        });
+                    }
+                });
+            }
         }
     });
 

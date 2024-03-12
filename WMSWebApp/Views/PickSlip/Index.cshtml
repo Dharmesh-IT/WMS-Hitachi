@@ -69,10 +69,10 @@
                                         <label>Doc Type</label>
                                         <select class="form-control" id="doctype">
                                             <option value="Select">Select</option>
-                                            <option value="StockTransfer PO">StockTransfer PO</option>
-                                            <option value="Sale PO">Sale PO</option>
-                                            @*<option value="SRN_PO">SRN PO</option>*@
-                                            <option value="ServiceOrder PO">ServiceOrder PO</option>
+                                           @*  <option value="StockTransfer PO">AGN</option> *@
+                                            <option value="Sale PO">Sales Order</option>
+                                            @*<option value="SRN_PO">SRN PO</option>
+                                        <option value="ServiceOrder PO">ServiceOrder PO</option>*@
                                         </select>
                                     </div>
                                 </div>
@@ -153,6 +153,12 @@
             </div>
         </div>
     </div>
+<div id="dialog">
+    <div id="gridForLocation"></div>
+</div>
+
+
+
     @section Scripts{
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");

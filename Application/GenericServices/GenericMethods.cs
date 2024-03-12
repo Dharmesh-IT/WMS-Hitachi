@@ -4,6 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Text;
+using System.Linq;
+using System.Buffers.Text;
+using System.Security.Cryptography.Xml;
 
 namespace Application.GenericServices
 {
@@ -95,6 +98,13 @@ namespace Application.GenericServices
 
             try
             {
+                //var requiredPadding = 4 - cipherData.Length % 4;
+                //if (requiredPadding > 0)
+                //{
+                //    cipherData += new string(Enumerable.Repeat('=', requiredPadding).ToArray());
+                //}
+                //var result = Convert.FromBase64String(cipherData);
+
                 using (var rijndaelManaged =
                        new RijndaelManaged { Key = key, IV = iv, Mode = CipherMode.CBC })
                 using (var memoryStream =
@@ -112,7 +122,54 @@ namespace Application.GenericServices
                 Console.WriteLine("A Cryptographic error occurred: {0}", e.Message);
                 return null;
             }
+            catch (Exception e)
+            {
+                string error = e.InnerException != null ? e.InnerException.ToString() : e.Message.ToString();
+                Console.WriteLine(error);
+                return null;
+            }
             // You may want to catch more exceptions here...
+        }
+        public static string DecryptClassObjectWithUrl(string cipherData, string keyString, string ivString)
+        {
+            byte[] key = Encoding.UTF8.GetBytes(keyString);
+            byte[] iv = Encoding.UTF8.GetBytes(ivString);
+            try
+            {
+               
+                var result = Convert.FromBase64String(cipherData);
+                using (var rijndaelManaged =
+                     new RijndaelManaged { Key = key, IV = iv, Mode = CipherMode.CBC,Padding = PaddingMode.PKCS7 })
+                using (var memoryStream =
+                       new MemoryStream(result))
+                using (var cryptoStream =
+                       new CryptoStream(memoryStream,
+                           rijndaelManaged.CreateDecryptor(key, iv),
+                           CryptoStreamMode.Read))
+                {
+                    return new StreamReader(cryptoStream).ReadToEnd();
+                }
+            }
+
+            catch (CryptographicException e)
+            {
+                Console.WriteLine("A Cryptographic error occurred: {0}", e.Message);
+                return null;
+            }
+            catch (Exception e)
+            {
+                string error = e.InnerException != null ? e.InnerException.ToString() : e.Message.ToString();
+                Console.WriteLine(error);
+                return null;
+            }
+           
+            // You may want to catch more exceptions here...
+        }
+
+        public static bool IsBase64String(string base64)
+        {
+            Span<byte> buffer = new Span<byte>(new byte[base64.Length]);
+            return Convert.TryFromBase64String(base64, buffer, out int bytesParsed);
         }
         public static string AESDecrypt(string cipherText, string key, string IV)
         {

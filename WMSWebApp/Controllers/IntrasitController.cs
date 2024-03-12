@@ -2,29 +2,25 @@
 using Application.Services.Master;
 using AutoMapper;
 using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Bibliography;
 using Domain.Model;
 using ExcelDataReader;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using ServiceReference1;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.ServiceModel;
 using System.Text;
 using System.Threading.Tasks;
-using WMS.Core.Data;
 using WMS.Data;
-using WMSWebApp.Models;
-using WMSWebApp.ViewModels;
-using static System.Net.WebRequestMethods;
 using WMSWebApp.HitachiProvider;
+using WMSWebApp.ViewModels;
+using WMSWebApp.Wrapper;
 
 namespace WMSWebApp.Controllers
 {
@@ -36,18 +32,22 @@ namespace WMSWebApp.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         //private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IUserProfileService _userProfileService;
+        private readonly IMemoryCacheWrapper _memoryCacheWrapper;
+        private readonly IHitachiConnection _hitachiConnection;
 
         private string inbound = "4e57534b5240313233";
         private string userName = "NWSKR";
         private string password = "NWSKR@23";
         public IntrasitController(IIntrasitHelper intrasitHelper, IMapper mapper, IWorkContext workContext, UserManager<ApplicationUser> userManager,
-                              IUserProfileService userProfileService)
+                              IUserProfileService userProfileService, IMemoryCacheWrapper memoryCache, IHitachiConnection hitachiConnection)
         {
             _IntrasitHelper = intrasitHelper;
             _mapper = mapper;
             _workContext = workContext;
             _userManager = userManager;
             _userProfileService = userProfileService;
+            _memoryCacheWrapper = memoryCache;
+            _hitachiConnection = hitachiConnection;
         }
 
         [HttpGet]
@@ -194,7 +194,7 @@ namespace WMSWebApp.Controllers
         public async Task<IActionResult> OnPostMyUploader(IFormFile importFile)
         {
             if (importFile == null) return Json(new { Status = 0, Message = "No File Selected" });
-
+            
             try
             {
 
@@ -213,10 +213,14 @@ namespace WMSWebApp.Controllers
                         ds = reader.AsDataSet();
                     }
                     //var fileData = GetDataFromCSVFile(ds);
-                    await GetDataFromCSVFile(ds);
+                   
                 }
 
-
+              var status =  await GetDataFromCSVFile(ds);
+                if(!status.status)
+                {
+                    return Json(new { Status = 0, Message = status.message });
+                }
                 //var dtEmployee = fileData.ToDataTable();
                 //var tblEmployeeParameter = new SqlParameter("tblEmployeeTableType", SqlDbType.Structured)
                 //{
@@ -231,8 +235,9 @@ namespace WMSWebApp.Controllers
                 return Json(new { Status = 0, Message = ex.Message });
             }
         }
-        private async Task GetDataFromCSVFile(DataSet ds)
+        private async Task<(bool status,string message)> GetDataFromCSVFile(DataSet ds)
         {
+            bool status = true;
             try
             {
                 DataTable dt = new DataTable();
@@ -240,10 +245,29 @@ namespace WMSWebApp.Controllers
                 dt = AddColumnsToReadFromExcelSheet(dt);
                 dt = CopyDataFromExcel(ds, dt);
 
+                var listOfExcelItem = CopyDataFromExcel(dt);
+                var listOfSubItem = listOfExcelItem.Select(x => x.SubItemName).ToList();
+                var items = _IntrasitHelper.GetItemSubItemDetails();
+                StringBuilder sb = new StringBuilder();
+                bool intialStatus = true;
+               foreach(var subItem in listOfSubItem.Distinct())
+                {
+                    if(!items.Any(x=>x.SubItemName == subItem.Trim()))
+                    {
+                        intialStatus = false;
+                        sb.AppendLine(subItem + " - Sub Item Name Not Found.");
+                    }
+                }
+               if(!intialStatus)
+                {
+                    sb.AppendLine("Please verify excel and reupload again.");
+                    return (intialStatus, sb.ToString());
+                }
                 DataTable dtSerialMapping = new DataTable();
                 dtSerialMapping = CopySerialMappingDataToAnotherTable(dtSerialMapping, dt);
-
                 List<ItemWiseQty> lstItemWiseQty = GetQtyGroupBySubItem(dt);
+
+                
 
                 DataTable dtFinalTable = new DataTable();
 
@@ -266,15 +290,25 @@ namespace WMSWebApp.Controllers
 
                 // _IntrasitHelper.blukUpload(dtFinalTable, dtSerialMapping, recvDate: DateTime.Now, loginBranch: "Test", "1025");
 
-                await PrepareDataForHitachi(dtFinalTable, lstItemWiseQty);
+              var list =  await PrepareDataForHitachi(dtFinalTable, lstItemWiseQty);
 
+                foreach (var listItem in list)
+                {
+                    var result = await _hitachiConnection.SubmitGrnNotification(JsonConvert.SerializeObject(listItem));
+                    if (result.Status.ToLower() == "failure")
+                    {
+                        status = false;
+                    }
+                }
 
 
             }
             catch (Exception ex)
             {
                 // throw;
+                return (false, ex.Message); 
             }
+            return (status,"Something is wrong please try again.");
         }
 
         #region classes need to move
@@ -302,6 +336,48 @@ namespace WMSWebApp.Controllers
             public string fulfillment_center { get; set; }
             public string source_number { get; set; }
             public List<Product> products { get; set; }
+            public Extras extras { get; set; }
+        }
+
+        public class OrderNotificationData
+        {
+            public List<Order> orders { get; set; }
+        }
+
+        public class Order
+        {
+            public string order_number { get; set; }
+            public string fulfillment_center { get; set; }
+            public string status { get; set; }
+            public List<Shipments> shipments { get; set; }
+        }
+
+        public class Shipments
+        {
+            public string shipment_number { get; set; }
+            public string waybill { get; set; }
+            public DateTime created_at { get; set; }
+            public string courier { get; set; }
+            public DateTime dispathed_at { get; set; }
+            public DateTime delivered_at { get; set; }
+
+            public Extras extras { get; set; }
+
+            public List<OrderLine> order_lines { get; set; }
+
+        }
+
+        public class OrderLine
+        {
+            public string order_line_number { get; set; }
+            public List<Products> products { get; set; }
+
+        }
+
+        public class Products
+        {
+            public string prod_sku { get; set; }
+            public int prod_qty { get; set; }
             public Extras extras { get; set; }
         }
 
@@ -356,7 +432,7 @@ namespace WMSWebApp.Controllers
                 DataRow drFinal = dtFinalTable.NewRow();
                 drFinal["Branch"] = dr["FulfillmentCenter"];
                 drFinal["Sender_Company"] = CompanyName;
-                drFinal["PurchaseOrder"] = dr["InvoiceNumber"];
+                drFinal["PurchaseOrder"] = dr["SourceNumber"];
                 drFinal["SubItem_Name"] = dr["SubItemName"];
                 //drFinal["SerialNumber"] = dr["SerialNumber"];
                 drFinal["Way_Bill_Number"] = dr["WayBillNo"];
@@ -390,7 +466,7 @@ namespace WMSWebApp.Controllers
                               {
                                   SubItemName = row.Field<string>("SubItem_Name"),
                                   WayBillNo = row.Field<string>("Way_Bill_Number"),
-                                  FulfillmentCenter = row.Field<string>("Sender_Company"),
+                                  FulfillmentCenter = row.Field<string>("Branch"),
                                   SourceNumber = row.Field<string>("Source_Number"),
                                   InvoiceNumber = row.Field<string>("PurchaseOrder"),
                               }
@@ -418,7 +494,7 @@ namespace WMSWebApp.Controllers
                         bucket = dr["Bucket"].ToString(),
                         product_sku = dr["SubItem_Name"].ToString(),
                         line_item_id = dr["Line_Item_Id"].ToString(),
-                        quantity = lstItemWiseQties.Find(x => x.SubItemName == dr["SubItem_Name"].ToString() && x.InvoiceNumber == dr["PurchaseOrder"].ToString()).Qty
+                        quantity = lstItemWiseQties.Find(x => x.SubItemName == dr["SubItem_Name"].ToString()).Qty
                     };
                     lstProducts.Add(p);
                 }
@@ -438,11 +514,8 @@ namespace WMSWebApp.Controllers
                 // Add other columns here if needed
 
                 var jsonValue = System.Text.Json.JsonSerializer.Serialize(lstGrnNotificationData[0]);
-
+               // await _hitachiConnection.SendGRNToHitachi("");
               
-                HitachiConnention connention = new HitachiConnention();
-                await connention.SendGRNToHitachi("");
-
             }
 
             return lstGrnNotificationData;
@@ -532,6 +605,28 @@ namespace WMSWebApp.Controllers
 
             dt.Rows[0].Delete();
             return dt;
+        }
+
+        private List<ExcelData> CopyDataFromExcel(DataTable dt)
+        {
+            List<ExcelData> list = new();
+
+            for (int i = 0; i < dt.Rows.Count; i++)
+            {
+                list.Add(new ExcelData
+                {
+                    FulfillmentCenter = Convert.ToString(dt.Rows[i][0]),
+                    InvoiceNumber = Convert.ToString(dt.Rows[i][1]),
+                    SubItemName = Convert.ToString(dt.Rows[i][2]),
+                    SerialNumber = Convert.ToString(dt.Rows[i][3]),
+                    Fifo = Convert.ToString(dt.Rows[i][4]),
+                    WayBillNo = Convert.ToString(dt.Rows[i][5]),
+                    SourceNumber = Convert.ToString(dt.Rows[i][6]),
+                    Bucket = Convert.ToString(dt.Rows[i][7])
+                });
+            }
+
+            return list;
         }
         private DataTable AddColumnsToReadFromExcelSheet(DataTable dt)
         {
@@ -642,5 +737,18 @@ namespace WMSWebApp.Controllers
             //ViewBag.Messsage = "Record Delete Successfully";
             return RedirectToAction("index");
         }
+    }
+
+    public  class ExcelData
+    {
+        public string FulfillmentCenter { get; set; }
+        public string InvoiceNumber { get; set; }
+        public string SubItemName { get; set; }
+        public string SerialNumber { get; set; }
+        public string Fifo { get; set; }
+        public string WayBillNo { get; set; }
+        public string SourceNumber { get; set; }
+        public string Bucket { get; set; }
+
     }
 }

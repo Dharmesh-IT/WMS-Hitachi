@@ -1,37 +1,39 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Domain.Model;
+using System;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using WMS.Core;
 using WMS.Core.Data;
-using Domain.Model;
 namespace Application.Services.GRN
 {
     public class IntrasitService : IIntrasitService
     {
         #region Fields
         private readonly IRepository<IntrasitDb> _intrasitRepository;
+        private readonly IRepository<ItemSerialDetailsDb> _itemSerialDetailsRepository;
 
         #endregion
 
         #region Ctor
-        public IntrasitService(IRepository<IntrasitDb> intrasitRepository)
+        public IntrasitService(IRepository<IntrasitDb> intrasitRepository, IRepository<ItemSerialDetailsDb> itemSerialDetails)
         {
             _intrasitRepository = intrasitRepository;
+            _itemSerialDetailsRepository = itemSerialDetails;
         }
         #endregion
 
         #region Methods
 
-        public virtual IPagedList<IntrasitDb> GetPendingPO(string branchCode, string pono, int pageIndex = 0, int pageSize = int.MaxValue)
+        public virtual (IPagedList<IntrasitDb> intrasitResult, IPagedList<ItemSerialDetailsDb> itemSerialDetailResult)
+            GetPendingPO(string branchCode, string pono, int pageIndex = 0, int pageSize = int.MaxValue)
         {
             try
             {
                 if (!string.IsNullOrEmpty(pono))
                 {
+                    var queryItemSerialDetails = from x in _itemSerialDetailsRepository.Table
+                                                 select x;
                     var query = from x in _intrasitRepository.Table
-                                select x;
+                                 select x;
                     query = query.Where(x => x.Login_Branch == branchCode && x.IsGrn == false);
 
                     if (pono == "0")
@@ -45,19 +47,19 @@ namespace Application.Services.GRN
                             query = query.Where(x => x.PurchaseOrder.Contains(pono));
                         }
                     }
-
+                    var resultItemDetails = new PagedList<ItemSerialDetailsDb>(queryItemSerialDetails,pageIndex,pageSize);
                     var result = new PagedList<IntrasitDb>(query, pageIndex, pageSize);
-                    return result;
+                    return (result, resultItemDetails);
                 }
                 else
                 {
-                    return null;
+                    return (null, null);
                 }
 
             }
             catch (Exception e)
             {
-                return null;
+                return (null,null);
             }
 
         }

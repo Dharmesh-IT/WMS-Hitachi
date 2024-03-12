@@ -14,9 +14,12 @@ namespace WMSAPI.Models
 
     public class Root
     {
+        public object _metadata { get; set; } = new object();
         public Data data { get; set; }
-        public List<object> errors { get; set; }
+        public List<object> errors { get; set; } = new List<object>{ };
         public string message { get; set; }
         public bool success { get; set; }
     }
+
+   
 }

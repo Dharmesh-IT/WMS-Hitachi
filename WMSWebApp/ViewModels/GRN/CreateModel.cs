@@ -15,10 +15,14 @@ namespace WMSWebApp.ViewModels.GRN
         public string acode { get; set; }
         public string Ponumber { get; set; }
         public string invoice { get; set; }
-        public string GRNNumberOfSAP { get; set; }
-        public string IRN { get; set; }
+        //public string GRNNumberOfSAP { get; set; }
+        public int LineItemId { get; set; }
+        //public string IRN { get; set; }
+        public string source_number { get; set; }
 
         public bool AllowGRN { get; set; }
+
+        public List<WarehouseModel> Warehouse { get; set; }
 
 
         public List<VendorVehicle> Vehicles { get; set; }

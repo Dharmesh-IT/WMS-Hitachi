@@ -160,7 +160,7 @@ public class AdoConnection : IAdoConnection
                     Connector.Open();
                     result = cmd.ExecuteNonQuery();
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     throw;
                 }

@@ -1,4 +1,5 @@
-﻿using WMS.Core;
+﻿using System;
+using WMS.Core;
 
 namespace Domain.Model.PO
 {
@@ -15,7 +16,7 @@ namespace Domain.Model.PO
         public string SubItemCode { get; set; }
         public bool IsProcessed { get; set; }
         public string request_id { get; set; }
-        public string order_number { get; set; }
+        public int order_number { get; set; }
         public string order_date { get; set; }
 
         public string order_type { get; set; }
@@ -26,9 +27,9 @@ namespace Domain.Model.PO
 
         public string invoiceNumber { get; set; }
         public string payment_mode { get; set; }
-        public int total_price { get; set; }
+        public decimal total_price { get; set; }
 
-        public int cod_amount { get; set; }
+        public decimal cod_amount { get; set; }
 
         public string invoice_url { get; set; }
 
@@ -43,16 +44,17 @@ namespace Domain.Model.PO
 
         public string invoice_payment_mode { get; set; }
 
-        public int invoice_total_price { get; set; }
+        public decimal invoice_total_price { get; set; }
 
-        public int invoice_cod_amount { get; set; }
+        public decimal invoice_cod_amount { get; set; }
 
         public string consignee_name { get; set; }
         public string consignee_address_line1 { get; set; }
         public string consignee_pin_code { get; set; }
         public string consignee_city { get; set; }
-        public string consginee_state { get; set; }
-        public string consginee_country { get; set; }
-        public string consginee_primary_phone_number { get; set; }
+        public string consignee_state { get; set; }
+        public string consignee_country { get; set; }
+        public string consignee_primary_phone_number { get; set; }
+        public DateTime SaleRequestInsertedDateTime { get; set; }
     }
 }

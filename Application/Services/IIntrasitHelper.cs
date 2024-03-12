@@ -28,7 +28,10 @@ namespace Application.Services
         string GetSubItemTitle(string subName);
 
         List<ItemSubItemDb> GetItemSubItemDetails();
+        List<ItemSubItemDb> GetItemSubItemDetails(string subItemCode);
 
+        List<InventoryStockItemDetails> GetItemDetailsForPickSlip(string subItemCode, int warehouseId);
+        bool CreateNewIntrasitSPFromAGN(IntrasitDb intrasit);
 
     }
 }
